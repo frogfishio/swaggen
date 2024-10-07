@@ -6,7 +6,7 @@ import { Request as CustomRequest, Response as CustomResponse } from "../handler
 import { ExpressCapabilityFactory } from "../capabilities/express/capability"; // Import Express capability factory
 
 export class UsersUseridAdapter {
-  private handler: UsersUseridHandler;
+  private handler!: UsersUseridHandler;
 
   constructor() {
     // Initialize capabilities
@@ -30,7 +30,7 @@ export class UsersUseridAdapter {
       req.method,
       req.headers,
       req.body,
-      req.originalUrl
+      `${req.protocol}://${req.get('host')}${req.originalUrl}`
     );
 
     // Invoke the handler method and handle response

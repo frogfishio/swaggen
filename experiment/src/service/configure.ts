@@ -1,6 +1,6 @@
 import { Express } from "express";
 import { UsersAdapter } from "./adapters/users";
-import { UsersUserIdAdapter } from "./adapters/users_userid";
+import { UsersUseridAdapter } from "./adapters/users_userid";
 
 /**
  * Configure routes for the Express app.
@@ -9,12 +9,12 @@ import { UsersUserIdAdapter } from "./adapters/users_userid";
 export function configureRoutes(app: Express): void {
   // Register routes for each adapter
   
-  const Users = new UsersAdapter();
-  app.get("/users", Users.get.bind(Users));
-  app.post("/users", Users.post.bind(Users));
+  const users = new UsersAdapter();
+  app.get("/users", users.get.bind(users));
+  app.post("/users", users.post.bind(users));
 
 
-  const UsersUserId = new UsersUserIdAdapter();
-  app.get("/users/{userId}", UsersUserId.get.bind(UsersUserId));
+  const usersUserid = new UsersUseridAdapter();
+  app.get("/users/:userId", usersUserid.get.bind(usersUserid));
 
 }

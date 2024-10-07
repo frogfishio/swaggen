@@ -7,7 +7,7 @@ import { Request as CustomRequest, Response as CustomResponse } from "../handler
 import { ExpressCapabilityFactory } from "../capabilities/express/capability"; // Import Express capability factory
 
 export class <%= className %> {
-  private handler: <%= handlerClassName %>;
+  private handler!: <%= handlerClassName %>;
 
   constructor() {
     // Initialize capabilities
@@ -31,7 +31,7 @@ export class <%= className %> {
       req.method,
       req.headers,
       req.body,
-      req.originalUrl
+      `${req.protocol}://${req.get('host')}${req.originalUrl}`
     );
 
     // Invoke the handler method and handle response

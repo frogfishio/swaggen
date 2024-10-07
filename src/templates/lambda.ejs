@@ -7,7 +7,7 @@ import { Request, Response } from "../handlers/_";
 import { LambdaCapabilityFactory } from "../capabilities/lambda/capability"; // Import Lambda capability factory
 
 export class <%= className %> {
-  private handler: <%= handlerClassName %>;
+  private handler!: <%= handlerClassName %>;
 
   constructor() {
     // Initialize capabilities

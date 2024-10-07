@@ -1,15 +1,14 @@
 import express, { Request, Response } from "express";
 
-// Create an instance of express
-const app = express();
-
 // Define a port number
 const PORT: number = 3000;
 
-// Define a simple route
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello, World from TypeScript!");
-});
+// Create an instance of express
+const app = express();
+
+import { configureRoutes } from "./service/configure";
+
+configureRoutes(app);
 
 // Start the server
 app.listen(PORT, () => {

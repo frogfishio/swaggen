@@ -6,34 +6,34 @@ export class ExpressDeploymentGenerator {
 
   // Generate Express deployment configuration
   public generate(
-    endpointMethods: Record<string, string[]>, // Pass an object where the key is the endpoint and the value is an array of HTTP methods
+    endpointMethods: Record<string, string[]>,
     capabilities: string[]
   ): void {
-    // Generate TypeScript code for configuring Express routes
     const importStatements = Object.keys(endpointMethods)
       .map((endpoint) => {
-        // Sanitize the endpoint to create a valid TypeScript class name
         const sanitizedEndpoint = this.sanitizeEndpoint(endpoint);
-        const adapterClassName = this.toPascalCase(sanitizedEndpoint); // No "Adapter" suffix
+        const adapterClassName =
+          this.toPascalCase(sanitizedEndpoint) + "Adapter"; // Add "Adapter" suffix
         const adapterFileName = this.sanitizeFileName(sanitizedEndpoint); // Clean file name
 
-        return `import { ${adapterClassName}Adapter } from "./adapters/${adapterFileName}";`;
+        return `import { ${adapterClassName} } from "./adapters/${adapterFileName}";`;
       })
       .join("\n");
 
     const routeRegistrations = Object.keys(endpointMethods)
       .map((endpoint) => {
-        // Sanitize the endpoint to create a valid TypeScript class name
         const sanitizedEndpoint = this.sanitizeEndpoint(endpoint);
         const adapterClassName =
           this.toPascalCase(sanitizedEndpoint) + "Adapter";
-        const instanceName = this.toCamelCase(sanitizedEndpoint); // Use camelCase for instance names
+        const instanceName = this.toCamelCase(sanitizedEndpoint);
 
-        // Generate routes only for the specific HTTP methods defined in the spec
+        // Convert parameters from "{param}" to ":param" for Express
+        const expressEndpoint = endpoint.replace(/\{(\w+)\}/g, ":$1");
+
         const methodHandlers = endpointMethods[endpoint]
           .map((method) => {
             const lowerCaseMethod = method.toLowerCase();
-            return `  app.${lowerCaseMethod}("${endpoint}", ${instanceName}.${lowerCaseMethod}.bind(${instanceName}));`;
+            return `  app.${lowerCaseMethod}("${expressEndpoint}", ${instanceName}.${lowerCaseMethod}.bind(${instanceName}));`;
           })
           .join("\n");
 
@@ -57,7 +57,6 @@ export function configureRoutes(app: Express): void {
 }
 `;
 
-    // Write the Express configuration TypeScript file
     fs.writeFileSync(
       path.join(this.outputPath, "configure.ts"),
       expressContent,
@@ -69,9 +68,11 @@ export function configureRoutes(app: Express): void {
   private sanitizeEndpoint(endpoint: string): string {
     return endpoint
       .replace(/^\//, "") // Remove leading slash
-      .replace(/[\/{}]/g, "_") // Replace slashes and curly braces with underscores
+      .replace(/\/(\w)/g, (_, g) => `_${g}`) // Replace slashes with underscores without changing case
+      .replace(/\{(\w+)\}/g, (_, g) => this.toPascalCase(g)) // Flatten parameters within curly braces to PascalCase
       .replace(/_+/g, "_") // Replace multiple underscores with a single one
-      .replace(/^_+|_+$/g, ""); // Trim leading and trailing underscores
+      .replace(/^_+|_+$/g, "") // Trim leading and trailing underscores
+      .replace(/\//g, "_"); // Replace slashes with underscores
   }
 
   // Helper to sanitize file name (lowercase and no trailing underscores)
@@ -81,15 +82,15 @@ export function configureRoutes(app: Express): void {
 
   // Convert a string to PascalCase
   private toPascalCase(str: string): string {
-    return str.replace(/(^\w|_\w)/g, (match) =>
-      match.replace("_", "").toUpperCase()
-    );
+    return str
+      .split(/[_\s]/) // Split by underscores or spaces
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // Capitalize first letter of each word
+      .join("");
   }
 
   // Convert a string to camelCase
   private toCamelCase(str: string): string {
-    return str.replace(/(^\w|_\w)/g, (match, index) =>
-      index === 0 ? match.toLowerCase() : match.replace("_", "").toUpperCase()
-    );
+    const pascal = this.toPascalCase(str);
+    return pascal.charAt(0).toLowerCase() + pascal.slice(1);
   }
 }

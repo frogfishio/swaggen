@@ -1,6 +1,6 @@
 import { Logger } from "../capabilities";
 
-export class AWSLoggerFactory {
+export class LambdaLoggerFactory {
   static create(): Logger {
     return new AWSLogger();
   }

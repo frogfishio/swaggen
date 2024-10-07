@@ -1,6 +1,6 @@
 import { CloudWatchLogs } from "aws-sdk"; // Import AWS SDK for CloudWatch
 
-export class AWSCloudWatchFactory {
+export class LambdaCloudWatchFactory {
   private cloudwatchLogs = new CloudWatchLogs();
   private logGroupName: string;
   private logStreamName: string;

@@ -1,6 +1,6 @@
 import { LambdaCloudWatchFactory } from "./cloudwatch";
 
-export class AWSCapabilityFactory {
+export class LambdaCapabilityFactory {
   // Create capabilities for AWS
   public async createCapabilities(
     caps: Array<string>

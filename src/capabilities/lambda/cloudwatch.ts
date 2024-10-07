@@ -1,4 +1,5 @@
 import { CloudWatchLogs } from "aws-sdk"; // Import AWS SDK for CloudWatch
+import { Log } from "../capabilities";
 
 export class LambdaCloudWatchFactory {
   private cloudwatchLogs = new CloudWatchLogs();
@@ -12,7 +13,7 @@ export class LambdaCloudWatchFactory {
   }
 
   // Initialize the CloudWatch logger object
-  public async createLogger() {
+  public async createLogger(): Promise<Log> {
     await this.ensureLogGroupAndStream();
 
     return {

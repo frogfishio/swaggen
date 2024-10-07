@@ -4,7 +4,7 @@
 
 import { <%= handlerClassName %> } from "../handlers/<%= handlerFileName %>";
 import { Request, Response } from "../handlers/_";
-import { AWSCapabilityFactory } from "../capabilities/lambda/capability"; // Import AWS capability factory
+import { LambdaCapabilityFactory } from "../capabilities/lambda/capability"; // Import Lambda capability factory
 
 export class <%= className %> {
   private handler: <%= handlerClassName %>;
@@ -14,9 +14,9 @@ export class <%= className %> {
     this.initializeHandler();
   }
 
-  // Method to initialize handler with AWS capabilities
+  // Method to initialize handler with Lambda capabilities
   private async initializeHandler() {
-    const awsFactory = new AWSCapabilityFactory();
+    const awsFactory = new LambdaCapabilityFactory();
     const capabilities = await awsFactory.createCapabilities(<%- JSON.stringify(capabilities) %>);
 
     // Pass the capabilities to the handler

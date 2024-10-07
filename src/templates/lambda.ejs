@@ -1,0 +1,33 @@
+const { <%= handlerClassName %> } = require("./handlers/<%= handlerFileName %>");
+
+const handler = new <%= handlerClassName %>();
+
+// Lambda-style handler function
+exports.<%= lambdaHandlerName %> = async (event, context) => {
+  try {
+    // Convert Lambda event to internal Request type
+    const internalReq = { 
+      method: event.httpMethod, 
+      headers: event.headers, 
+      body: JSON.parse(event.body || "{}"), 
+      url: event.path 
+    };
+
+    // Invoke the handler method and get the response
+    const handlerResponse = await handler.<%= method.toLowerCase() %>(internalReq);
+
+    // Return response in Lambda format
+    return {
+      statusCode: handlerResponse.status,
+      headers: handlerResponse.headers,
+      body: JSON.stringify(handlerResponse.body),
+    };
+  } catch (error) {
+    // Catch and handle any errors
+    console.error(error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Internal Server Error" }),
+    };
+  }
+};

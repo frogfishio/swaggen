@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js --clean --out gen test2.yaml",
+    "start": "node dist/index.js --clean --out gen test2.yaml --target lambda --capabilities log",
     "dev": "ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rimraf dist"
@@ -13,6 +13,8 @@
   "license": "UNLICENSED",
   "description": "",
   "dependencies": {
+    "@types/aws-sdk": "^0.0.42",
+    "aws-sdk": "^2.1691.0",
     "commander": "^12.1.0",
     "ejs": "^3.1.10",
     "js-yaml": "^4.1.0"

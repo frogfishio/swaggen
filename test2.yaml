@@ -98,6 +98,8 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
+            pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
       responses:
         '200':
           description: A single user object
@@ -144,19 +146,27 @@ components:
       bearerFormat: JWT
 
   schemas:
-    # BaseUser schema for inheritance
+    # BaseUser schema for inheritance with validation rules
     BaseUser:
       type: object
       properties:
         id:
           type: string
-          example: "12345"
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          description: A UUIDv4 that uniquely identifies the user
         name:
           type: string
           example: "John Doe"
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9 ]*$'  # Name can include letters, numbers, and spaces
+          description: The full name of the user
         email:
           type: string
+          format: email
           example: "john.doe@example.com"
+          description: The email address of the user
       required:
         - id
         - name
@@ -182,13 +192,14 @@ components:
         - profile
         - role
 
-    # Nested Profile schema
+    # Nested Profile schema with validation
     Profile:
       type: object
       properties:
         bio:
           type: string
           example: "Software Developer with 5 years of experience."
+          maxLength: 200
         website:
           type: string
           format: uri
@@ -205,25 +216,30 @@ components:
               format: uri
               example: "https://linkedin.com/in/johndoe"
 
-    # Array of complex Address objects
+    # Array of complex Address objects with validation
     Address:
       type: object
       properties:
         street:
           type: string
           example: "123 Main St"
+          maxLength: 100
         city:
           type: string
           example: "San Francisco"
+          maxLength: 50
         state:
           type: string
           example: "CA"
+          maxLength: 20
         zipCode:
           type: string
           example: "94105"
+          pattern: '^[0-9]{5}(?:-[0-9]{4})?$'  # US Zip Code format
         country:
           type: string
           example: "USA"
+          maxLength: 50
       required:
         - street
         - city

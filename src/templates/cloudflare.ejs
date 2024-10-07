@@ -1,0 +1,30 @@
+import { <%= handlerClassName %> } from "./handlers/<%= handlerFileName %>";
+
+const handler = new <%= handlerClassName %>();
+
+addEventListener("fetch", (event) => {
+  event.respondWith(handleRequest(event.request));
+});
+
+async function handleRequest(request: Request): Promise<Response> {
+  try {
+    const internalReq = { 
+      method: request.method, 
+      headers: Object.fromEntries(request.headers.entries()), 
+      body: request.body ? await request.json() : undefined, 
+      url: request.url,
+    };
+
+    const handlerResponse = await handler.<%= method.toLowerCase() %>(internalReq);
+
+    return new Response(JSON.stringify(handlerResponse.body), {
+      status: handlerResponse.statusCode,
+      headers: handlerResponse.headers,
+    });
+  } catch (error) {
+    console.error(error);
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+    });
+  }
+}

@@ -7,7 +7,7 @@ export class SchemaGenerator {
   // Generate TypeScript interfaces from the OpenAPI schemas
   public generate(schemas: Record<string, any>): void {
     // Ensure the __schema directory exists
-    const schemaDir = path.join(this.outputPath, "__schema");
+    const schemaDir = path.join(this.outputPath, "schema");
     this.ensureDirectoryExists(schemaDir);
 
     // Process each schema
@@ -18,7 +18,9 @@ export class SchemaGenerator {
       const filePath = path.join(schemaDir, fileName);
 
       // Resolve references and dependencies for the schema
-      const { imports, extendsClause } = this.resolveImportsAndExtends(schemas[schemaName]);
+      const { imports, extendsClause } = this.resolveImportsAndExtends(
+        schemas[schemaName]
+      );
 
       // Generate TypeScript interface content
       const interfaceContent = this.generateInterfaceContent(
@@ -106,7 +108,10 @@ export class SchemaGenerator {
   }
 
   // Resolve imports for the referenced schemas and determine any extends clauses
-  private resolveImportsAndExtends(schema: any): { imports: string[]; extendsClause: string } {
+  private resolveImportsAndExtends(schema: any): {
+    imports: string[];
+    extendsClause: string;
+  } {
     const imports: string[] = [];
     let extendsClause = "";
 
@@ -131,7 +136,9 @@ export class SchemaGenerator {
 
     // Resolve references for extending
     if (schema.allOf) {
-      const baseSchemas = schema.allOf.filter((subSchema: any) => subSchema.$ref);
+      const baseSchemas = schema.allOf.filter(
+        (subSchema: any) => subSchema.$ref
+      );
       if (baseSchemas.length > 0) {
         const baseSchemaNames = baseSchemas.map((baseSchema: any) =>
           this.toPascalCase(this.extractRefName(baseSchema.$ref))

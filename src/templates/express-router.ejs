@@ -1,0 +1,14 @@
+import express from 'express';
+import { <%= routes.map(route => `${route.endpoint.replace(/^\//, "").replace(/\//g, "_").toLowerCase()}Adapter`).join(", ") %> } from '../adapters';
+
+const router = express.Router();
+
+<% routes.forEach(route => { %>
+  const <%= route.endpoint.replace(/^\//, "").replace(/\//g, "_").toLowerCase() %>Adapter = new <%= route.endpoint.replace(/^\//, "").replace(/\//g, "_").toLowerCase() %>Adapter();
+
+  <% route.methods.forEach(method => { %>
+    router.<%= method.toLowerCase() %>('<%= route.endpoint %>', <%= route.endpoint.replace(/^\//, "").replace(/\//g, "_").toLowerCase() %>Adapter.<%= method.toLowerCase() %>);
+  <% }) %>
+<% }) %>
+
+export default router;

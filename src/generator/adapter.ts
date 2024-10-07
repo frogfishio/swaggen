@@ -2,14 +2,23 @@ import * as path from "path";
 import * as fs from "fs";
 import ejs from "ejs";
 
+// Type definition for collected route information
+interface RouteInfo {
+  endpoint: string;
+  methods: string[];
+  platform: "lambda" | "cloudflare" | "express";
+}
+
 export class AdapterGenerator {
+  private routes: RouteInfo[] = []; // Store collected route information
+
   constructor(private outputPath: string) {}
 
   // Generate an adapter for a specific endpoint, HTTP methods, platform, and capabilities
   public async generate(
     endpoint: string,
     methods: Record<string, any>,
-    platform: "lambda" | "cloudflare",
+    platform: "lambda" | "cloudflare" | "express", // Add express as an option
     capabilities: string[] // Pass the capabilities array
   ): Promise<void> {
     // Normalize the endpoint to create a file name (e.g., /users -> users.ts)
@@ -23,9 +32,23 @@ export class AdapterGenerator {
     const handlerClassName = this.toPascalCase(normalizedEndpoint) + "Handler";
     const handlerFileName = normalizedEndpoint; // Define handlerFileName
 
+    // Extract method names as an array to use in the template
+    const methodKeys = Object.keys(methods);
+
+    // Collect route information for linker/deployment generation
+    this.routes.push({
+      endpoint,
+      methods: methodKeys.map((method) => method.toUpperCase()),
+      platform,
+    });
+
     // Choose the appropriate template based on the platform
     const templateFile =
-      platform === "lambda" ? "lambda.ejs" : "cloudflare.ejs";
+      platform === "lambda"
+        ? "lambda.ejs"
+        : platform === "cloudflare"
+        ? "cloudflare.ejs"
+        : "express.ejs"; // Use "express.ejs" for Express platform
 
     // Correctly resolve the path to the template in $PWD/src/templates
     const templatePath = path.join(
@@ -44,7 +67,7 @@ export class AdapterGenerator {
       handlerClassName,
       handlerFileName,
       normalizedEndpoint,
-      methods,
+      methods: methodKeys, // Pass method keys to iterate over in the template
       capabilities, // Pass the capabilities to the template
     });
 
@@ -62,6 +85,11 @@ export class AdapterGenerator {
     fs.writeFileSync(adapterFilePath, adapterClassContent.trim(), "utf8");
 
     console.log(`Created ${platform} adapter class: ${adapterFilePath}`);
+  }
+
+  // Get the collected route information for further processing
+  public getRoutes(): RouteInfo[] {
+    return this.routes;
   }
 
   // Ensure a directory exists, and if not, create it

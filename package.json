@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js --clean --out gen test2.yaml --target lambda --capabilities log",
+    "experiment": "node dist/index.js --clean --out experiment/src/service test2.yaml --target express --capabilities log",
     "dev": "ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rimraf dist"
@@ -14,10 +15,12 @@
   "description": "",
   "dependencies": {
     "@types/aws-sdk": "^0.0.42",
+    "@types/winston": "^2.4.4",
     "aws-sdk": "^2.1691.0",
     "commander": "^12.1.0",
     "ejs": "^3.1.10",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "winston": "^3.15.0"
   },
   "devDependencies": {
     "@types/ejs": "^3.1.5",

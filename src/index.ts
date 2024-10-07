@@ -25,16 +25,25 @@ class AppCLI {
     this.program
       .argument("<filename.yaml>", "YAML file to process")
       .option("-o, --out <output path>", "Specify the output path", "./output") // Default output path
+      .option("--clean", "Clean the output folder before generating new files") // Add clean option
       .action(this.handleAction.bind(this)); // Use `bind` to preserve context
   }
 
   // Action handler method for processing the command
-  private async handleAction(filename: string, options: { out: string }) {
+  private async handleAction(
+    filename: string,
+    options: { out: string; clean: boolean }
+  ) {
     const inputFilePath = path.resolve(filename);
     const outputPath = path.resolve(options.out);
 
     console.log(`Processing file: ${inputFilePath}`);
     console.log(`Output will be saved to: ${outputPath}`);
+
+    // Clean the output directory if --clean is specified
+    if (options.clean) {
+      this.cleanOutputDirectory(outputPath);
+    }
 
     // Ensure output directory exists
     this.ensureOutputDirectory(outputPath);
@@ -65,7 +74,7 @@ class AppCLI {
       // Process each endpoint
       for (const endpoint in parsedYAML.paths) {
         const httpMethods = Object.keys(parsedYAML.paths[endpoint]);
-        handlerGenerator.generate(endpoint, httpMethods);
+        handlerGenerator.generate(endpoint, parsedYAML.paths[endpoint]);
       }
 
       console.log("File generation completed.");
@@ -102,6 +111,15 @@ class AppCLI {
       console.log(`Base file generated at ${outputFilePath}`);
     } catch (error) {
       console.error("Error generating base file:", error);
+    }
+  }
+
+  // Clean the output directory if it exists
+  private cleanOutputDirectory(outputPath: string) {
+    if (fs.existsSync(outputPath)) {
+      console.log(`Cleaning output directory: ${outputPath}`);
+      fs.rmSync(outputPath, { recursive: true, force: true });
+      console.log(`Output directory cleaned: ${outputPath}`);
     }
   }
 

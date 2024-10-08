@@ -10,8 +10,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rimraf dist"
   },
-  "author": "",
-  "license": "UNLICENSED",
+  "author": "El'Diablo",
+  "license": "GPL-3.0-only",
   "description": "",
   "dependencies": {
     "@types/aws-sdk": "^0.0.42",
@@ -26,6 +26,9 @@
     "@types/ejs": "^3.1.5",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.7.4",
+    "gulp": "^5.0.0",
+    "gulp-clean": "^0.4.0",
+    "gulp-json-transform": "^0.5.0",
     "rimraf": "^3.0.2",
     "ts-node": "^10.0.0",
     "typescript": "^5.6.2"

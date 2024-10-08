@@ -1,4 +1,4 @@
-/node_modules
-/dist
+node_modules
+dist
+/release
 /gen
-/experiment/node_modules

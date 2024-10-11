@@ -50,13 +50,13 @@ export class AdapterGenerator {
         ? "cloudflare.ejs"
         : "express.ejs"; // Use "express.ejs" for Express platform
 
-    // Correctly resolve the path to the template in $PWD/src/templates
-    const templatePath = path.join(
-      process.cwd(),
-      "src",
-      "templates",
-      templateFile
-    );
+    // Use the SWAGGEN_TEMPLATE_ROOT environment variable for development, or fallback to __dirname for production
+    const templateRoot =
+      process.env.SWAGGEN_TEMPLATE_ROOT ||
+      path.join(__dirname, "..", "templates");
+
+    // Correctly resolve the path to the template file
+    const templatePath = path.join(templateRoot, templateFile);
 
     // Read the template
     const template = fs.readFileSync(templatePath, "utf8");

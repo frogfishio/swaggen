@@ -6,13 +6,13 @@ export class BaseFileGenerator {
   // Generate the base file from template
   public async generateBaseFile(outputPath: string) {
     try {
-      // Correct template path from project root
-      const templatePath = path.join(
-        process.cwd(),
-        "src",
-        "templates",
-        "base.ejs"
-      );
+      // Use the SWAGGEN_TEMPLATE_ROOT environment variable for development, if available
+      const templateRoot =
+        process.env.SWAGGEN_TEMPLATE_ROOT ||
+        path.join(__dirname, "..", "templates");
+
+      // Resolve the template path
+      const templatePath = path.join(templateRoot, "base.ejs");
 
       // Ensure "handlers" subfolder exists
       const handlersDir = path.join(outputPath, "handlers");
@@ -21,7 +21,7 @@ export class BaseFileGenerator {
       // Set the output path for the base file inside the "handlers" folder
       const outputFilePath = path.join(handlersDir, "_.ts"); // Output file name
 
-      // Read the template
+      // Read the template file
       const template = fs.readFileSync(templatePath, "utf8");
 
       // Render the template (you can pass any necessary variables here)

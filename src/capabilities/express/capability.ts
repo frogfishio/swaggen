@@ -1,6 +1,7 @@
+import { CapabilityFactory } from "../../types";
 import { ExpressLoggerFactory } from "./express-logger";
 
-export class ExpressCapabilityFactory {
+export class ExpressCapabilityFactory implements CapabilityFactory {
   // Create capabilities for Express
   public async createCapabilities(
     caps: Array<string>

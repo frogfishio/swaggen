@@ -1,6 +1,7 @@
+import { CapabilityFactory } from "../../types";
 import { LambdaCloudWatchFactory } from "./cloudwatch";
 
-export class LambdaCapabilityFactory {
+export class LambdaCapabilityFactory implements CapabilityFactory {
   // Create capabilities for AWS
   public async createCapabilities(
     caps: Array<string>

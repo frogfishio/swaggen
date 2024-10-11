@@ -1,10 +1,10 @@
 {
   "name": "@frogfish/swaggen",
-  "version": "0.0.12",
+  "version": "0.0.15",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node build/index.js --clean --out gen test.yaml --target lambda --capabilities log",
+    "start": "rm -rf build && tsc && SWAGGEN_TEMPLATE_ROOT=$PWD/src/templates node build/index.js --clean --out gen test.yaml --target lambda --capabilities log",
     "start:swaggen": "swaggen --clean --out gen test.yaml --target lambda --capabilities log",
     "experiment": "node build/index.js --clean --out experiment/src/service test.yaml --target express --capabilities log",
     "dev": "ts-node src/index.ts",

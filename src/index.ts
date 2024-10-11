@@ -76,7 +76,7 @@ class AppCLI {
     const deploymentGenerator = new DeploymentGenerator(outputPath); // Initialize DeploymentGenerator
 
     // Copy target-specific capabilities folder and common capabilities file
-    await capabilitiesCopier.copyCapabilities(outputPath, targetPlatform);
+    // await capabilitiesCopier.copyCapabilities(outputPath, targetPlatform);
 
     // Generate the base file from the template
     await baseFileGenerator.generateBaseFile(outputPath);

@@ -1,5 +1,5 @@
 import { createLogger, format, transports } from "winston";
-import { Log } from "../capabilities";
+import { Log } from "../../types";
 
 export class ExpressLoggerFactory {
   public createLogger(): Log {

@@ -1,5 +1,5 @@
 import { CloudWatchLogs } from "aws-sdk"; // Import AWS SDK for CloudWatch
-import { Log } from "../capabilities";
+import { Log } from "../../types";
 
 export class LambdaCloudWatchFactory {
   private cloudwatchLogs = new CloudWatchLogs();

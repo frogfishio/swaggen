@@ -1,14 +1,16 @@
 {
-  "name": "swaggen",
-  "version": "1.0.0",
+  "name": "@frogfish/swaggen",
+  "version": "0.0.1",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js --clean --out gen test.yaml --target lambda --capabilities log",
-    "experiment": "node dist/index.js --clean --out experiment/src/service test.yaml --target express --capabilities log",
+    "start": "node build/index.js --clean --out gen test.yaml --target lambda --capabilities log",
+    "start:swaggen": "swaggen --clean --out gen test.yaml --target lambda --capabilities log",
+    "experiment": "node build/index.js --clean --out experiment/src/service test.yaml --target express --capabilities log",
     "dev": "ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "clean": "rimraf dist"
+    "clean": "rimraf build",
+    "dist": "gulp build-dist"
   },
   "author": "El'Diablo",
   "license": "GPL-3.0-only",
@@ -28,6 +30,7 @@
     "@types/node": "^22.7.4",
     "gulp": "^5.0.0",
     "gulp-clean": "^0.4.0",
+    "gulp-header": "^2.0.9",
     "gulp-json-transform": "^0.5.0",
     "rimraf": "^3.0.2",
     "ts-node": "^10.0.0",

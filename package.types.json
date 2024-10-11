@@ -1,9 +1,8 @@
 {
   "name": "@frogfish/swaggen-types",
-  "version": "0.0.10",
+  "version": "0.0.12",
   "description": "TypeScript definitions for swaggen",
-  "main": "",
-  "types": "index.d.ts",
+  "types": "types.d.ts",
   "author": "Your Name",
   "license": "GPL-3.0-only",
   "dependencies": {}

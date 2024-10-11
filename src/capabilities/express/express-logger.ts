@@ -1,8 +1,8 @@
 import { createLogger, format, transports } from "winston";
-import { Log } from "../../types";
+import { LoggingCapability } from "../../types";
 
 export class ExpressLoggerFactory {
-  public createLogger(): Log {
+  public createLogger(): LoggingCapability {
     const winstonLogger = createLogger({
       level: "info",
       format: format.combine(

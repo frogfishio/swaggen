@@ -4,7 +4,7 @@
 
 import { <%= handlerClassName %> } from "../handlers/<%= handlerFileName %>";
 import { Request, Response } from "../handlers/_";
-import { LambdaCapabilityFactory } from "../capabilities/lambda/capability"; // Import Lambda capability factory
+import { LambdaCapabilityFactory } from "@frogfish/swaggen-lambda"; // Import Lambda capability factory
 
 export class <%= className %> {
   private handler!: <%= handlerClassName %>;
@@ -23,7 +23,7 @@ export class <%= className %> {
     this.handler = new <%= handlerClassName %>(capabilities);
   }
 
-  <% Object.keys(methods).forEach((method) => { %>
+  <% methods.forEach((method) => { %>
   public async <%= normalizedEndpoint %>_<%= method.toLowerCase() %>(event: any, context: any): Promise<any> {
     try {
       // Create an instance of your custom Request class
@@ -35,7 +35,7 @@ export class <%= className %> {
       );
 
       // Invoke the handler method and get the response
-      const handlerResponse: Response = await this.handler.<%= method.toLowerCase() %>(internalReq);
+      const handlerResponse: Response = await this.handler["<%= method.toLowerCase() %>"](internalReq);
 
       // Return response in Lambda format
       return {

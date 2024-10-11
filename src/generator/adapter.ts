@@ -17,8 +17,8 @@ export class AdapterGenerator {
   // Generate an adapter for a specific endpoint, HTTP methods, platform, and capabilities
   public async generate(
     endpoint: string,
-    methods: Record<string, any>,
-    platform: "lambda" | "cloudflare" | "express", // Add express as an option
+    methods: Record<string, any>, // Methods as an object with method names as keys
+    platform: "lambda" | "cloudflare" | "express",
     capabilities: string[] // Pass the capabilities array
   ): Promise<void> {
     // Normalize the endpoint to create a file name (e.g., /users -> users.ts)

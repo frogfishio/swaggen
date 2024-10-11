@@ -1,7 +1,8 @@
-const gulp = require("gulp");
+const { src, dest, series, parallel } = require("gulp");
 const clean = require("gulp-clean");
 const jsonTransform = require("gulp-json-transform");
 const header = require("gulp-header");
+const bump = require("gulp-bump"); // Version bumping
 const fs = require("fs");
 const path = require("path");
 
@@ -21,27 +22,27 @@ const paths = {
 const shebang = "#!/usr/bin/env node\n";
 
 // Task to clean the dist directory
-gulp.task("clean", () => {
-  return gulp.src(paths.dist, { allowEmpty: true, read: false }).pipe(clean());
-});
+function cleanDist() {
+  return src(paths.dist, { allowEmpty: true, read: false }).pipe(clean());
+}
 
-// Task to copy necessary assets and source files to dist, adjusting the base for templates
-gulp.task("copy-assets", () => {
-  // Copy README and LICENSE files with base "./"
-  gulp
-    .src([paths.readme, paths.license], { base: "./" })
-    .pipe(gulp.dest(paths.dist));
+// Task to bump version in package.json before copying
+function bumpVersion() {
+  return src(paths.packageJson)
+    .pipe(bump({ type: "patch" })) // Increment version, 'patch', 'minor', or 'major'
+    .pipe(dest("./")); // Save the updated package.json in the root directory
+}
 
-  // Copy templates and flatten the directory so it's copied to dist/templates
-  return gulp
-    .src(paths.templates, { base: "src/templates" }) // Set the base to 'src/templates'
-    .pipe(gulp.dest(path.join(paths.dist, "templates"))); // Output to dist/templates
-});
+// Task to copy README and LICENSE to dist
+function copyAssets() {
+  return src([paths.readme, paths.license], { base: "./" }).pipe(
+    dest(paths.dist)
+  );
+}
 
 // Task to copy and modify package.json
-gulp.task("package-json", () => {
-  return gulp
-    .src(paths.packageJson)
+function copyPackageJson() {
+  return src(paths.packageJson)
     .pipe(
       jsonTransform((pkg) => {
         // Remove dev dependencies and unnecessary fields
@@ -58,46 +59,51 @@ gulp.task("package-json", () => {
 
         return pkg;
       }, 2)
-    ) // Pretty print JSON with 2 spaces
-    .pipe(gulp.dest(paths.dist));
-});
+    )
+    .pipe(dest(paths.dist));
+}
 
 // Task to copy transpiled JavaScript files from build to dist
-gulp.task("copy-js", () => {
-  return gulp
-    .src(paths.transpiledJS, { base: "./build" })
-    .pipe(gulp.dest(paths.dist));
-});
+function copyJS() {
+  return src(paths.transpiledJS, { base: "./build" }).pipe(dest(paths.dist));
+}
+
+// Task to copy templates to dist/templates
+function copyTemplates() {
+  return src(paths.templates, { base: "src/templates" }).pipe(
+    dest(path.join(paths.dist, "templates"))
+  );
+}
 
 // Task to add the shebang to the entry point (index.js)
-gulp.task("add-shebang", () => {
-  return gulp
-    .src(path.join(paths.dist, "index.js")) // Target the copied index.js in dist
+function addShebang() {
+  return src(path.join(paths.dist, "index.js"))
     .pipe(header(shebang)) // Add the shebang at the top
-    .pipe(gulp.dest(paths.dist)); // Save it back to dist
-});
+    .pipe(dest(paths.dist));
+}
 
 // Task to set execute permissions using Node's built-in fs module
-gulp.task("chmod", (done) => {
+function chmod(done) {
   const indexPath = path.join(paths.dist, "index.js");
   fs.chmod(indexPath, 0o755, (err) => {
-    // 0o755 means read and execute for all, write for owner
     if (err) {
       throw err;
     }
     done();
   });
-});
+}
 
-// Default task to prepare everything for publishing
-gulp.task(
-  "build-dist",
-  gulp.series(
-    "clean",
-    "copy-assets",
-    "package-json",
-    "copy-js",
-    "add-shebang",
-    "chmod"
-  )
+// Build task in series: clean -> bump version -> copy assets and js -> package.json -> add shebang -> set permissions
+const build = series(
+  cleanDist,
+  bumpVersion,
+  parallel(copyAssets, copyTemplates, copyJS, copyPackageJson),
+  addShebang,
+  chmod
 );
+
+// Export tasks
+exports.clean = cleanDist;
+exports.bump = bumpVersion;
+exports.build = build;
+exports.default = build;

@@ -1,6 +1,6 @@
 {
   "name": "@frogfish/swaggen",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
@@ -29,6 +29,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.7.4",
     "gulp": "^5.0.0",
+    "gulp-bump": "^3.2.0",
     "gulp-clean": "^0.4.0",
     "gulp-header": "^2.0.9",
     "gulp-json-transform": "^0.5.0",

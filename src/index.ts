@@ -5,7 +5,7 @@ import * as yaml from "js-yaml";
 import { Command } from "commander";
 import { HandlerGenerator } from "./generator/handler";
 import { SchemaGenerator } from "./generator/schema";
-import { AdapterGenerator } from "./generator/adapter";
+import { AdapterGenerator } from "./generator/adapter/adapter";
 import { CapabilitiesCopier } from "./generator/capabilities"; // Import the new copier class
 import { BaseFileGenerator } from "./generator/base"; // Import the new base file generator class
 import { DeploymentGenerator } from "./generator/deployment/deployment"; // Import the DeploymentGenerator class

@@ -7,13 +7,12 @@
 import { <%= type %> } from "../schema/<%= type.toLowerCase() %>";
 <% }); %>
 <% } %>
-import { BaseHandler, Request, Response } from "./_";
+import { BaseHandler, Request, Response } from "./handler.base";
 
 export class <%= className %> extends BaseHandler {
 
 <% errorOverrides.forEach(errorMethod => { %>
   <%- errorMethod %>
-
 <% }); %>
 
 <% methodImplementations.forEach(methodImpl => { %>

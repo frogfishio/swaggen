@@ -6,6 +6,8 @@ import { Command } from "commander";
 import { HandlerGenerator } from "./generator/handler";
 import { SchemaGenerator } from "./generator/schema";
 import { AdapterGenerator } from "./generator/adapter/adapter";
+// import { CapabilitiesCopier } from "./generator/capabilities"; // Import the new copier class
+// import { BaseFileGenerator } from "./generator/base"; // Import the new base file generator class
 import { DeploymentGenerator } from "./generator/deployment/deployment"; // Import the DeploymentGenerator class
 
 class AppCLI {
@@ -69,7 +71,15 @@ class AppCLI {
     this.ensureOutputDirectory(outputPath);
 
     // Create instances of the helper classes
+    // const capabilitiesCopier = new CapabilitiesCopier();
+    // const baseFileGenerator = new BaseFileGenerator();
     const deploymentGenerator = new DeploymentGenerator(outputPath); // Initialize DeploymentGenerator
+
+    // Copy target-specific capabilities folder and common capabilities file
+    // await capabilitiesCopier.copyCapabilities(outputPath, targetPlatform);
+
+    // // Generate the base file from the template
+    // await baseFileGenerator.generateBaseFile(outputPath);
 
     // Load the YAML file
     try {

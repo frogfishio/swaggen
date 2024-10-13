@@ -47,8 +47,8 @@ export class ExpressAdapterGenerator extends BaseGenerator {
     // Write the adapter file
     const adapterFilePath = path.join(
       this.outputPath,
-      "adapters",
-      `${normalizedEndpoint}.ts`
+      normalizedEndpoint,
+      "adapter.ts"
     );
     this.ensureOutputDirectory(path.dirname(adapterFilePath));
     fs.writeFileSync(adapterFilePath, adapterClassContent.trim(), "utf8");

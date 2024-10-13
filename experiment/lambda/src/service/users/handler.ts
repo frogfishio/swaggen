@@ -8,7 +8,7 @@ import { User } from "../schema/user";
 import { Error } from "../schema/error";
 
 
-import { BaseHandler, Request, Response } from "./_";
+import { BaseHandler, Request, Response } from "./handler.base";
 
 export class UsersHandler extends BaseHandler {
 
@@ -17,36 +17,29 @@ export class UsersHandler extends BaseHandler {
     return super.unauthorized("Unauthorized - Missing or invalid authentication token");
   }
 
-
   protected getForbidden(): Response {
     return super.forbidden("Forbidden - You do not have permission to access this resource");
   }
-
 
   protected getInternalServerError(): Response {
     return super.internalServerError("Internal Server Error");
   }
 
-
   protected postBadRequest(): Response {
     return super.badRequest("Bad Request - Invalid user data");
   }
-
 
   protected postUnauthorized(): Response {
     return super.unauthorized("Unauthorized - Missing or invalid authentication token");
   }
 
-
   protected postForbidden(): Response {
     return super.forbidden("Forbidden - You do not have permission to access this resource");
   }
 
-
   protected postInternalServerError(): Response {
     return super.internalServerError("Internal Server Error");
   }
-
 
 
 

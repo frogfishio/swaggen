@@ -1,3 +1,4 @@
+// handler.generator.ts
 import * as path from "path";
 import * as fs from "fs";
 import ejs from "ejs"; // Import EJS
@@ -12,69 +13,43 @@ export class HandlerGenerator {
   ): void {
     const normalizedEndpoint = this.normalizeEndpoint(endpoint);
     const className = this.toPascalCase(normalizedEndpoint) + "Handler";
-
-    // Create the new folder structure: <out>/<normalizedEndpoint>
+  
+    // Create the new folder structure: <out>/<filename>
     const targetDir = path.join(this.outputPath, normalizedEndpoint);
     this.ensureDirectoryExists(targetDir);
-
-    // File paths for handler.ts and handler.base.ts
-    const handlerFilePath = path.join(targetDir, `handler.ts`);
-    const baseFilePath = path.join(targetDir, `handler.base.ts`);
-
+  
+    // File path is now <out>/<filename>/handler.ts
+    const filePath = path.join(targetDir, `handler.ts`);
+  
     // Extract types to import from the method definitions
     const typesToImport = Array.from(this.extractTypesToImport(methods));
-
+  
     // Generate method implementations
     const methodImplementations = Object.keys(methods).map((method) =>
       this.generateMethodImplementation(method.toLowerCase(), methods[method])
     );
-
+  
     // Generate error override methods
     const errorOverrides = Object.keys(methods).flatMap((method) =>
       this.generateErrorOverrideMethods(method.toLowerCase(), methods[method])
     );
-
-    // Generate handler.ts
-    this.generateHandlerFile(handlerFilePath, className, typesToImport, methodImplementations, errorOverrides);
-
-    // Generate handler.base.ts from base.ejs
-    this.generateBaseFile(baseFilePath);
-  }
-
-  // Generate handler.ts file from handler.ejs
-  private generateHandlerFile(
-    filePath: string,
-    className: string,
-    typesToImport: string[],
-    methodImplementations: string[],
-    errorOverrides: string[]
-  ) {
+  
+    // Read the EJS template
     const templatePath = this.getTemplatePath("handler.ejs");
     const template = fs.readFileSync(templatePath, "utf8");
-
+  
+    // Render the template
     const classContent = ejs.render(template, {
       className,
       typesToImport,
       methodImplementations,
       errorOverrides,
     });
-
+  
     // Write the TypeScript file with the generated class
     fs.writeFileSync(filePath, classContent.trim(), "utf8");
+  
     console.log(`Created handler file: ${filePath}`);
-  }
-
-  // Generate handler.base.ts file from base.ejs
-  private generateBaseFile(filePath: string) {
-    const templatePath = this.getTemplatePath("base.ejs");
-    const template = fs.readFileSync(templatePath, "utf8");
-
-    // Render the base.ejs template (you can pass any necessary variables here)
-    const baseContent = ejs.render(template, {});
-
-    // Write the handler.base.ts file with the generated content
-    fs.writeFileSync(filePath, baseContent.trim(), "utf8");
-    console.log(`Created base handler file: ${filePath}`);
   }
 
   // Ensure a directory exists, and if not, create it
@@ -165,6 +140,9 @@ export class HandlerGenerator {
             // itemsSchema is a ReferenceObject
             const typeName = this.extractRefName(itemsSchema.$ref);
             types.add(typeName);
+          } else {
+            // itemsSchema is a SchemaObject
+            // Handle nested schemas if needed
           }
         }
 
@@ -195,6 +173,24 @@ export class HandlerGenerator {
         if ("$ref" in content.schema) {
           // schema is a ReferenceObject
           requestBodyType = this.extractRefName(content.schema.$ref);
+        } else {
+          // schema is a SchemaObject
+          const schemaObject = content.schema as OpenAPIV3.SchemaObject;
+
+          if (schemaObject.type === "array" && schemaObject.items) {
+            // schemaObject is an ArraySchemaObject
+            const itemsSchema = schemaObject.items;
+
+            if ("$ref" in itemsSchema) {
+              // itemsSchema is a ReferenceObject
+              requestBodyType = this.extractRefName(itemsSchema.$ref);
+            } else {
+              // itemsSchema is a SchemaObject
+              // Handle nested schemas if needed
+            }
+          }
+
+          // Handle other schema types if necessary
         }
       }
     }
@@ -224,6 +220,8 @@ export class HandlerGenerator {
         if ("$ref" in param.schema) {
           // param.schema is a ReferenceObject
           const refName = this.extractRefName(param.schema.$ref);
+          // You might need to resolve the reference to get the actual schema
+          // For validation, you might need to implement reference resolution
         } else {
           // param.schema is a SchemaObject
           const paramSchema = param.schema as OpenAPIV3.SchemaObject;

@@ -8,7 +8,7 @@ import { User } from "../schema/user";
 import { Error } from "../schema/error";
 
 
-import { BaseHandler, Request, Response } from "./_";
+import { BaseHandler, Request, Response } from "./handler.base";
 
 export class UsersUseridHandler extends BaseHandler {
 
@@ -17,26 +17,21 @@ export class UsersUseridHandler extends BaseHandler {
     return super.badRequest("Bad Request - Invalid user ID format");
   }
 
-
   protected getUnauthorized(): Response {
     return super.unauthorized("Unauthorized - Missing or invalid authentication token");
   }
-
 
   protected getForbidden(): Response {
     return super.forbidden("Forbidden - You do not have permission to access this resource");
   }
 
-
   protected getNotFound(): Response {
     return super.notFound("User not found");
   }
 
-
   protected getInternalServerError(): Response {
     return super.internalServerError("Internal Server Error");
   }
-
 
 
 

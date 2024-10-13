@@ -8,14 +8,15 @@ import {
   extractEntityName,
 } from "../util";
 
-export class HandlerProxyGenerator {
+export class HandlerStubGenerator {
   constructor(private outputPath: string) {}
 
-  public generateProxy(endpoint: string, methods: Record<string, any>): void {
+  public generateStub(endpoint: string, methods: Record<string, any>): void {
     const normalizedEndpoint = normalizeEndpoint(endpoint);
-    const className = toPascalCase(normalizedEndpoint) + "Proxy";
+    const className = toPascalCase(normalizedEndpoint) + "Stub";
+    const interfaceName = toPascalCase(normalizedEndpoint) + "Proxy";
 
-    // Create directory for the proxy file: <out>/<normalizedEndpoint>
+    // Create directory for the stub file: <out>/<normalizedEndpoint>
     const targetDir = path.join(this.outputPath, normalizedEndpoint);
     this.ensureDirectoryExists(targetDir);
 
@@ -25,45 +26,53 @@ export class HandlerProxyGenerator {
       methods
     ); // Fetch the correct types
 
-    const { proxyMethods, usedTypes } = this.generateProxyMethods(
+    const { stubMethods, usedTypes } = this.generateStubMethods(
       methods,
-      endpoint
-    ); // Generate proxy methods and collect used types
+      endpoint,
+      interfaceName
+    ); // Generate stub methods
 
     // Generate import statements for used types
     const typeImports = this.generateTypeImports(usedTypes);
 
-    // Combine all parts into a proxy.ts file content
-    const proxyContent = this.buildProxyContent(
+    // Generate the proxy interface import statement
+    const proxyImport = `import { ${interfaceName} } from "./proxy";`;
+
+    // Combine all parts into a stub.ts file content
+    const stubContent = this.buildStubContent(
       typeImports,
+      proxyImport,
       imports,
       className,
-      proxyMethods
+      interfaceName,
+      stubMethods
     );
 
-    // Write the proxy.ts file
-    const proxyFilePath = path.join(targetDir, `proxy.ts`);
-    fs.writeFileSync(proxyFilePath, proxyContent, "utf8");
-    console.log(`Created proxy file: ${proxyFilePath}`);
+    // Write the stub.ts file
+    const stubFilePath = path.join(targetDir, `stub.ts`);
+    fs.writeFileSync(stubFilePath, stubContent, "utf8");
+    console.log(`Created stub file: ${stubFilePath}`);
   }
 
   /**
-   * Generate proxy method signatures using the correct request and response types.
+   * Generate stub method implementations using the correct request and response types.
    *
    * @param methods - The HTTP methods for the endpoint.
    * @param endpoint - The API endpoint (e.g., "/users").
-   * @returns An object containing the proxy methods and the used types.
+   * @param interfaceName - The name of the proxy interface to implement.
+   * @returns An object containing the stub methods and the used types.
    */
-  private generateProxyMethods(
+  private generateStubMethods(
     methods: Record<string, any>,
-    endpoint: string
-  ): { proxyMethods: string; usedTypes: Set<string> } {
+    endpoint: string,
+    interfaceName: string
+  ): { stubMethods: string; usedTypes: Set<string> } {
     const entityName = extractEntityName(endpoint);
     const normalizedEndpoint = normalizeEndpoint(endpoint);
     const pascalCaseEntityName = toPascalCase(entityName);
     const usedTypes = new Set<string>(); // To collect used types
 
-    const proxyMethods = Object.keys(methods)
+    const stubMethods = Object.keys(methods)
       .map((method) => {
         const methodName = this.getMethodName(method, entityName);
         const requestType = this.getRequestTypeName(
@@ -79,11 +88,14 @@ export class HandlerProxyGenerator {
         if (requestType !== "void") usedTypes.add(requestType);
         usedTypes.add(responseType);
 
-        return `${methodName}(request: ${requestType}): Promise<${responseType}>;`;
+        return `
+  async ${methodName}(request: ${requestType}): Promise<${responseType}> {
+    return Promise.reject("Not implemented");
+  }`;
       })
       .join("\n");
 
-    return { proxyMethods, usedTypes };
+    return { stubMethods, usedTypes };
   }
 
   /**
@@ -133,7 +145,7 @@ export class HandlerProxyGenerator {
   }
 
   /**
-   * Generates import statements for the used types in the proxy.
+   * Generates import statements for the used types in the stub class.
    *
    * @param usedTypes - A set of used request/response types (e.g., "PostUserRequest", "GetUserResponse").
    * @returns A string representing the import statements.
@@ -145,26 +157,31 @@ export class HandlerProxyGenerator {
   }
 
   /**
-   * Builds the proxy file content.
+   * Builds the stub class content.
    *
    * @param typeImports - The import statements for used types.
+   * @param proxyImport - The import statement for the proxy interface.
    * @param handlerImports - The imports for the generated handler.
-   * @param className - The class name of the proxy.
+   * @param className - The class name of the stub.
+   * @param interfaceName - The name of the proxy interface to implement.
    * @param methods - The method signatures of the proxy.
-   * @returns The complete content for the proxy file.
+   * @returns The complete content for the stub file.
    */
-  private buildProxyContent(
+  private buildStubContent(
     typeImports: string,
+    proxyImport: string,
     handlerImports: string,
     className: string,
+    interfaceName: string,
     methods: string
   ): string {
     return `
-// Auto-generated proxy for ${className}
+// Auto-generated stub class for ${className}
 ${typeImports}
+${proxyImport}
 ${handlerImports}
 
-export interface ${className} {
+export class ${className} implements ${interfaceName} {
   ${methods}
 }
     `;

@@ -1,6 +1,7 @@
 import { OpenAPIV3 } from "openapi-types";
 import * as fs from "fs";
 import * as path from "path";
+import pluralize from "pluralize"; // Ensure this is installed via npm
 
 /**
  * Converts a string to PascalCase.
@@ -26,6 +27,27 @@ export function normalizeEndpoint(endpoint: string): string {
     .replace(/\//g, "_")
     .replace(/[{}]/g, "")
     .toLowerCase();
+}
+
+/**
+ * Extracts the entity/resource name from an endpoint.
+ *
+ * @param endpoint - The API endpoint (e.g., "/users/{userId}").
+ * @returns The extracted entity name in PascalCase (e.g., "User").
+ */
+export function extractEntityName(endpoint: string): string {
+  // Split the endpoint by '/' and filter out path parameters
+  const parts = endpoint
+    .split("/")
+    .filter((part) => part && !part.startsWith("{"));
+
+  // Assume the last part is the resource/entity name
+  const resource = parts[parts.length - 1] || "Entity";
+
+  // Convert to singular form using pluralize
+  const singularResource = pluralize.singular(resource);
+
+  return toPascalCase(singularResource);
 }
 
 /**
@@ -121,6 +143,64 @@ export function resolveType(
     default:
       return "any";
   }
+}
+
+/**
+ * Generates a base interface name from the operation ID, method, and entity name.
+ *
+ * @param operationId - The operation ID from the OpenAPI specification.
+ * @param method - The HTTP method (e.g., "get", "post").
+ * @param entityName - The name of the entity/resource.
+ * @returns The base interface name as a PascalCase string.
+ */
+export function generateBaseInterfaceName(
+  operationId: string | undefined,
+  method: string,
+  entityName: string
+): string {
+  const methodCapitalized = capitalizeFirstLetter(method.toLowerCase());
+  return operationId
+    ? toPascalCase(operationId)
+    : `${methodCapitalized}${entityName}`;
+}
+
+/**
+ * Generates proxy methods based on the HTTP method and endpoint.
+ *
+ * @param methods - A record of HTTP methods and their corresponding OpenAPI operation objects.
+ * @param endpoint - The API endpoint (e.g., "/users").
+ * @returns A string representing the TypeScript method signatures for the proxy.
+ */
+export function generateProxyMethods(
+  methods: Record<string, any>,
+  endpoint: string
+): string {
+  // Normalize the endpoint for cleaner method and type names
+  const normalizedEndpoint = normalizeEndpoint(endpoint);
+
+  // Define a map for HTTP methods to meaningful method names
+  const httpMethodMap: Record<string, string> = {
+    post: "create",
+    get: "read",
+    put: "replace",
+    patch: "modify",
+    delete: "delete",
+  };
+
+  return Object.keys(methods)
+    .map((method) => {
+      // Use the mapped method name, or default to the HTTP method (lowercased)
+      const methodName =
+        httpMethodMap[method.toLowerCase()] || method.toLowerCase();
+      const pascalCaseEndpoint = toPascalCase(normalizedEndpoint);
+      const methodSignature = `${methodName}${pascalCaseEndpoint}`;
+
+      const requestType = `${toPascalCase(method)}${pascalCaseEndpoint}Request`;
+      const responseType = `${toPascalCase(method)}${pascalCaseEndpoint}Response`;
+
+      return `${methodSignature}(request: ${requestType}): Promise<${responseType}>;`;
+    })
+    .join("\n");
 }
 
 export function getTemplatePath(templateFile: string): string {

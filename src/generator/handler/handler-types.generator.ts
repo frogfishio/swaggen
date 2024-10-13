@@ -1,13 +1,11 @@
-// handler.types.ts
-
 import { OpenAPIV3 } from "openapi-types";
-import pluralize from "pluralize"; // Ensure this is installed via npm
 import {
   toPascalCase,
   extractRefName,
   isReferenceObject,
-  capitalizeFirstLetter,
   resolveType,
+  generateBaseInterfaceName, // Reuse from util.ts
+  extractEntityName, // Reuse from util.ts
 } from "../util";
 
 /**
@@ -25,16 +23,16 @@ export function generateInterfaceDefinitions(
   const referencedTypes: Set<string> = new Set();
 
   // Extract the base resource/entity name from the endpoint
-  const entityName = extractEntityName(endpoint);
+  const entityName = extractEntityName(endpoint); // Reuse from util.ts
 
   // Iterate over each method (GET, POST, PUT, etc.)
   for (const [method, operation] of Object.entries(methods)) {
-    const methodCapitalized = capitalizeFirstLetter(method.toLowerCase());
-
-    // Determine the base name for interfaces
-    const baseName = operation.operationId
-      ? toPascalCase(operation.operationId)
-      : `${methodCapitalized}${entityName}`;
+    // Use the reusable function to generate the base interface name
+    const baseName = generateBaseInterfaceName(
+      operation.operationId,
+      method,
+      entityName
+    );
 
     // Generate interfaces for request body
     if (operation.requestBody) {
@@ -86,27 +84,6 @@ export function generateInterfaceDefinitions(
 }
 
 /**
- * Extracts the entity/resource name from an endpoint.
- *
- * @param endpoint - The API endpoint (e.g., "/users/{userId}").
- * @returns The extracted entity name in PascalCase (e.g., "User").
- */
-function extractEntityName(endpoint: string): string {
-  // Split the endpoint by '/' and filter out path parameters
-  const parts = endpoint
-    .split("/")
-    .filter((part) => part && !part.startsWith("{"));
-
-  // Assume the last part is the resource/entity name
-  const resource = parts[parts.length - 1] || "Entity";
-
-  // Convert to singular form using pluralize
-  const singularResource = pluralize.singular(resource);
-
-  return toPascalCase(singularResource);
-}
-
-/**
  * Generates a TypeScript interface definition from an OpenAPI schema.
  *
  * @param interfaceName - The name of the interface.
@@ -114,7 +91,7 @@ function extractEntityName(endpoint: string): string {
  * @param referencedTypes - A Set to collect referenced complex types.
  * @returns A string containing the TypeScript interface definition.
  */
-function generateInterface(
+export function generateInterface(
   interfaceName: string,
   schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject,
   referencedTypes: Set<string>
@@ -143,95 +120,3 @@ function generateInterface(
     return `export type ${interfaceName} = ${tsType};`;
   }
 }
-
-// /**
-//  * Resolves the TypeScript type from an OpenAPI schema.
-//  *
-//  * @param schema - The OpenAPI schema object.
-//  * @param referencedTypes - A Set to collect referenced complex types.
-//  * @returns A string representing the TypeScript type.
-//  */
-// function resolveType(
-//   schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject,
-//   referencedTypes: Set<string>
-// ): string {
-//   if (isReferenceObject(schema)) {
-//     const refName = extractRefName(schema.$ref);
-//     referencedTypes.add(refName);
-//     return refName;
-//   }
-
-//   switch (schema.type) {
-//     case "integer":
-//     case "number":
-//       return "number";
-//     case "string":
-//       if (schema.format === "date-time") return "string"; // Can be refined
-//       return "string";
-//     case "boolean":
-//       return "boolean";
-//     case "array":
-//       if (schema.items) {
-//         return `${resolveType(schema.items, referencedTypes)}[]`;
-//       }
-//       return "any[]";
-//     case "object":
-//       if (schema.properties) {
-//         // Anonymous object type
-//         const props = Object.entries(schema.properties)
-//           .map(([propName, propSchema]) => {
-//             const optional = !(schema.required && schema.required.includes(propName));
-//             const tsType = resolveType(propSchema, referencedTypes);
-//             return `${propName}${optional ? "?" : ""}: ${tsType};`;
-//           })
-//           .join(" ");
-//         return `{ ${props} }`;
-//       }
-//       return "Record<string, any>";
-//     default:
-//       return "any";
-//   }
-// }
-
-// /**
-//  * Checks if the schema is a ReferenceObject.
-//  *
-//  * @param schema - The OpenAPI schema object.
-//  * @returns A boolean indicating if it's a ReferenceObject.
-//  */
-// function isReferenceObject(schema: any): schema is OpenAPIV3.ReferenceObject {
-//   return schema.$ref !== undefined;
-// }
-
-// /**
-//  * Extracts the reference name from a $ref string.
-//  *
-//  * @param ref - The $ref string.
-//  * @returns The extracted reference name.
-//  */
-// function extractRefName(ref: string): string {
-//   return ref.split("/").pop() || "UnknownType";
-// }
-
-// /**
-//  * Converts a string to PascalCase.
-//  *
-//  * @param str - The input string.
-//  * @returns The PascalCase version of the string.
-//  */
-// function toPascalCase(str: string): string {
-//   return str
-//     .replace(/(^\w|_\w)/g, (match) => match.replace("_", "").toUpperCase())
-//     .replace(/\s+/g, "");
-// }
-
-// /**
-//  * Capitalizes the first letter of a string.
-//  *
-//  * @param str - The input string.
-//  * @returns The string with the first letter capitalized.
-//  */
-// function capitalizeFirstLetter(str: string): string {
-//   if (!str) return str;
-//   return str.charAt(0).toUpperCase() + str.slice(1);
-// }

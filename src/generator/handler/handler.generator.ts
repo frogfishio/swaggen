@@ -8,6 +8,7 @@ import { generateInterfaceDefinitions } from "./handler-types.generator"; // Imp
 import { HandlerProxyGenerator } from "./handler-proxy.generator"; // Import the proxy generator
 
 import { toPascalCase, extractRefName } from "../util";
+import { HandlerStubGenerator } from "./handler-stub.generator";
 
 // Replace the local `toPascalCase` and `extractRefName` with imports from `handlers-util.ts`
 export class HandlerGenerator {
@@ -63,6 +64,10 @@ export class HandlerGenerator {
     // Call the proxy generator after generating the handler
     const proxyGenerator = new HandlerProxyGenerator(this.outputPath);
     proxyGenerator.generateProxy(endpoint, methods); // Proxy generation call
+
+    // Call the stub generator after generating the proxy
+    const stubGenerator = new HandlerStubGenerator(this.outputPath);
+    stubGenerator.generateStub(endpoint, methods); // Proxy generation call
   }
 
   /**

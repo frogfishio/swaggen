@@ -3,9 +3,9 @@ import * as path from "path";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { Command } from "commander";
-import { HandlerGenerator } from "./generator/handler";
+import { HandlerGenerator } from "./generator/handler/handler.generator";
 import { SchemaGenerator } from "./generator/schema";
-import { AdapterGenerator } from "./generator/adapter/adapter";
+import { AdapterGenerator } from "./generator/adapter/adapter.generator";
 import { DeploymentGenerator } from "./generator/deployment/deployment"; // Import the DeploymentGenerator class
 
 class AppCLI {

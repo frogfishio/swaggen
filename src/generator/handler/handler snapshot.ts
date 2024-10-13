@@ -3,7 +3,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import { OpenAPIV3 } from "openapi-types"; // Import OpenAPI types
-import { generateInterfaceDefinitions } from "./handler.types"; // Import the updated function
+import { generateInterfaceDefinitions } from "./handler-types.generator"; // Import the updated function
 
 export class HandlerGenerator {
   constructor(private outputPath: string) {}

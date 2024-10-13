@@ -3,14 +3,17 @@ import * as path from "path";
 import * as fs from "fs";
 import ejs from "ejs";
 import { RouteInfo } from "./types";
-import { BaseGenerator } from "./base.adapter";
+import {
+  ensureOutputDirectory,
+  toPascalCase,
+  normalizeEndpoint,
+  getTemplatePath,
+} from "../util";
 
-export class ExpressAdapterGenerator extends BaseGenerator {
+export class ExpressAdapterGenerator {
   private routes: RouteInfo[] = [];
 
-  constructor(outputPath: string) {
-    super(outputPath);
-  }
+  constructor(private outputPath: string) {}
 
   public async generate(
     endpoint: string,
@@ -18,9 +21,9 @@ export class ExpressAdapterGenerator extends BaseGenerator {
     capabilities: string[]
   ): Promise<void> {
     // Normalize endpoint and define class names
-    const normalizedEndpoint = this.normalizeEndpoint(endpoint);
-    const className = this.toPascalCase(normalizedEndpoint) + "Adapter";
-    const handlerClassName = this.toPascalCase(normalizedEndpoint) + "Handler";
+    const normalizedEndpoint = normalizeEndpoint(endpoint);
+    const className = toPascalCase(normalizedEndpoint) + "Adapter";
+    const handlerClassName = toPascalCase(normalizedEndpoint) + "Handler";
     const handlerFileName = normalizedEndpoint;
     const methodKeys = Object.keys(methods);
 
@@ -32,7 +35,7 @@ export class ExpressAdapterGenerator extends BaseGenerator {
     });
 
     // Render the template
-    const templatePath = this.getTemplatePath("express.ejs");
+    const templatePath = getTemplatePath("express.ejs");
     const template = fs.readFileSync(templatePath, "utf8");
     const adapterClassContent = ejs.render(template, {
       className,
@@ -50,7 +53,7 @@ export class ExpressAdapterGenerator extends BaseGenerator {
       normalizedEndpoint,
       "adapter.ts"
     );
-    this.ensureOutputDirectory(path.dirname(adapterFilePath));
+    ensureOutputDirectory(path.dirname(adapterFilePath));
     fs.writeFileSync(adapterFilePath, adapterClassContent.trim(), "utf8");
 
     console.log(`Created Express adapter: ${adapterFilePath}`);

@@ -2,6 +2,13 @@
 
 import { OpenAPIV3 } from "openapi-types";
 import pluralize from "pluralize"; // Ensure this is installed via npm
+import {
+  toPascalCase,
+  extractRefName,
+  isReferenceObject,
+  capitalizeFirstLetter,
+  resolveType,
+} from "../util";
 
 /**
  * Generates TypeScript import statements and interface definitions for request and response bodies based on OpenAPI definitions.
@@ -35,20 +42,30 @@ export function generateInterfaceDefinitions(
       const content = requestBody.content["application/json"];
       if (content && content.schema) {
         const interfaceName = `${baseName}Request`;
-        const interfaceDefinition = generateInterface(interfaceName, content.schema, referencedTypes);
+        const interfaceDefinition = generateInterface(
+          interfaceName,
+          content.schema,
+          referencedTypes
+        );
         interfaces.push(interfaceDefinition);
       }
     }
 
     // Generate interfaces for successful responses (2xx)
     if (operation.responses) {
-      for (const [statusCode, response] of Object.entries(operation.responses)) {
+      for (const [statusCode, response] of Object.entries(
+        operation.responses
+      )) {
         if (/^2\d\d$/.test(statusCode)) {
           const responseObj = response as OpenAPIV3.ResponseObject;
           const content = responseObj.content?.["application/json"];
           if (content && content.schema) {
             const interfaceName = `${baseName}Response`;
-            const interfaceDefinition = generateInterface(interfaceName, content.schema, referencedTypes);
+            const interfaceDefinition = generateInterface(
+              interfaceName,
+              content.schema,
+              referencedTypes
+            );
             interfaces.push(interfaceDefinition);
           }
         }
@@ -58,10 +75,7 @@ export function generateInterfaceDefinitions(
 
   // Generate import statements for all referenced types
   const imports = Array.from(referencedTypes)
-    .map(
-      (type) =>
-        `import { ${type} } from "../schema/${type.toLowerCase()}";`
-    )
+    .map((type) => `import { ${type} } from "../schema/${type.toLowerCase()}";`)
     .join("\n");
 
   return {
@@ -79,7 +93,9 @@ export function generateInterfaceDefinitions(
  */
 function extractEntityName(endpoint: string): string {
   // Split the endpoint by '/' and filter out path parameters
-  const parts = endpoint.split("/").filter(part => part && !part.startsWith("{"));
+  const parts = endpoint
+    .split("/")
+    .filter((part) => part && !part.startsWith("{"));
 
   // Assume the last part is the resource/entity name
   const resource = parts[parts.length - 1] || "Entity";
@@ -111,7 +127,9 @@ function generateInterface(
   } else if (schema.type === "object" && schema.properties) {
     const properties = Object.entries(schema.properties)
       .map(([propName, propSchema]) => {
-        const optional = !(schema.required && schema.required.includes(propName));
+        const optional = !(
+          schema.required && schema.required.includes(propName)
+        );
         const tsType = resolveType(propSchema, referencedTypes);
         return `  ${propName}${optional ? "?" : ""}: ${tsType};`;
       })
@@ -126,94 +144,94 @@ function generateInterface(
   }
 }
 
-/**
- * Resolves the TypeScript type from an OpenAPI schema.
- *
- * @param schema - The OpenAPI schema object.
- * @param referencedTypes - A Set to collect referenced complex types.
- * @returns A string representing the TypeScript type.
- */
-function resolveType(
-  schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject,
-  referencedTypes: Set<string>
-): string {
-  if (isReferenceObject(schema)) {
-    const refName = extractRefName(schema.$ref);
-    referencedTypes.add(refName);
-    return refName;
-  }
+// /**
+//  * Resolves the TypeScript type from an OpenAPI schema.
+//  *
+//  * @param schema - The OpenAPI schema object.
+//  * @param referencedTypes - A Set to collect referenced complex types.
+//  * @returns A string representing the TypeScript type.
+//  */
+// function resolveType(
+//   schema: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject,
+//   referencedTypes: Set<string>
+// ): string {
+//   if (isReferenceObject(schema)) {
+//     const refName = extractRefName(schema.$ref);
+//     referencedTypes.add(refName);
+//     return refName;
+//   }
 
-  switch (schema.type) {
-    case "integer":
-    case "number":
-      return "number";
-    case "string":
-      if (schema.format === "date-time") return "string"; // Can be refined
-      return "string";
-    case "boolean":
-      return "boolean";
-    case "array":
-      if (schema.items) {
-        return `${resolveType(schema.items, referencedTypes)}[]`;
-      }
-      return "any[]";
-    case "object":
-      if (schema.properties) {
-        // Anonymous object type
-        const props = Object.entries(schema.properties)
-          .map(([propName, propSchema]) => {
-            const optional = !(schema.required && schema.required.includes(propName));
-            const tsType = resolveType(propSchema, referencedTypes);
-            return `${propName}${optional ? "?" : ""}: ${tsType};`;
-          })
-          .join(" ");
-        return `{ ${props} }`;
-      }
-      return "Record<string, any>";
-    default:
-      return "any";
-  }
-}
+//   switch (schema.type) {
+//     case "integer":
+//     case "number":
+//       return "number";
+//     case "string":
+//       if (schema.format === "date-time") return "string"; // Can be refined
+//       return "string";
+//     case "boolean":
+//       return "boolean";
+//     case "array":
+//       if (schema.items) {
+//         return `${resolveType(schema.items, referencedTypes)}[]`;
+//       }
+//       return "any[]";
+//     case "object":
+//       if (schema.properties) {
+//         // Anonymous object type
+//         const props = Object.entries(schema.properties)
+//           .map(([propName, propSchema]) => {
+//             const optional = !(schema.required && schema.required.includes(propName));
+//             const tsType = resolveType(propSchema, referencedTypes);
+//             return `${propName}${optional ? "?" : ""}: ${tsType};`;
+//           })
+//           .join(" ");
+//         return `{ ${props} }`;
+//       }
+//       return "Record<string, any>";
+//     default:
+//       return "any";
+//   }
+// }
 
-/**
- * Checks if the schema is a ReferenceObject.
- *
- * @param schema - The OpenAPI schema object.
- * @returns A boolean indicating if it's a ReferenceObject.
- */
-function isReferenceObject(schema: any): schema is OpenAPIV3.ReferenceObject {
-  return schema.$ref !== undefined;
-}
+// /**
+//  * Checks if the schema is a ReferenceObject.
+//  *
+//  * @param schema - The OpenAPI schema object.
+//  * @returns A boolean indicating if it's a ReferenceObject.
+//  */
+// function isReferenceObject(schema: any): schema is OpenAPIV3.ReferenceObject {
+//   return schema.$ref !== undefined;
+// }
 
-/**
- * Extracts the reference name from a $ref string.
- *
- * @param ref - The $ref string.
- * @returns The extracted reference name.
- */
-function extractRefName(ref: string): string {
-  return ref.split("/").pop() || "UnknownType";
-}
+// /**
+//  * Extracts the reference name from a $ref string.
+//  *
+//  * @param ref - The $ref string.
+//  * @returns The extracted reference name.
+//  */
+// function extractRefName(ref: string): string {
+//   return ref.split("/").pop() || "UnknownType";
+// }
 
-/**
- * Converts a string to PascalCase.
- *
- * @param str - The input string.
- * @returns The PascalCase version of the string.
- */
-function toPascalCase(str: string): string {
-  return str
-    .replace(/(^\w|_\w)/g, (match) => match.replace("_", "").toUpperCase())
-    .replace(/\s+/g, "");
-}
+// /**
+//  * Converts a string to PascalCase.
+//  *
+//  * @param str - The input string.
+//  * @returns The PascalCase version of the string.
+//  */
+// function toPascalCase(str: string): string {
+//   return str
+//     .replace(/(^\w|_\w)/g, (match) => match.replace("_", "").toUpperCase())
+//     .replace(/\s+/g, "");
+// }
 
-/**
- * Capitalizes the first letter of a string.
- *
- * @param str - The input string.
- * @returns The string with the first letter capitalized.
- */
-function capitalizeFirstLetter(str: string): string {
-  if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+// /**
+//  * Capitalizes the first letter of a string.
+//  *
+//  * @param str - The input string.
+//  * @returns The string with the first letter capitalized.
+//  */
+// function capitalizeFirstLetter(str: string): string {
+//   if (!str) return str;
+//   return str.charAt(0).toUpperCase() + str.slice(1);
+// }

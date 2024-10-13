@@ -5,7 +5,11 @@ import * as path from "path";
 import * as fs from "fs";
 import { OpenAPIV3 } from "openapi-types"; // Import OpenAPI types
 import { generateInterfaceDefinitions } from "./handler-types.generator"; // Import the updated function
+import { HandlerProxyGenerator } from "./handler-proxy.generator"; // Import the proxy generator
 
+import { toPascalCase, extractRefName } from "../util";
+
+// Replace the local `toPascalCase` and `extractRefName` with imports from `handlers-util.ts`
 export class HandlerGenerator {
   constructor(private outputPath: string) {}
 
@@ -14,7 +18,7 @@ export class HandlerGenerator {
     methods: Record<string, OpenAPIV3.OperationObject>
   ): void {
     const normalizedEndpoint = this.normalizeEndpoint(endpoint);
-    const className = this.toPascalCase(normalizedEndpoint) + "Handler";
+    const className = toPascalCase(normalizedEndpoint) + "Handler";
 
     // Create the new folder structure: <out>/<normalizedEndpoint>
     const targetDir = path.join(this.outputPath, normalizedEndpoint);
@@ -55,6 +59,10 @@ export class HandlerGenerator {
 
     // Generate handler.base.ts from base content
     this.generateBaseFile(baseFilePath);
+
+    // Call the proxy generator after generating the handler
+    const proxyGenerator = new HandlerProxyGenerator(this.outputPath);
+    proxyGenerator.generateProxy(endpoint, methods); // Proxy generation call
   }
 
   /**
@@ -163,17 +171,17 @@ export class HandlerGenerator {
       .toLowerCase();
   }
 
-  /**
-   * Convert a string to PascalCase.
-   *
-   * @param str - The input string.
-   * @returns The PascalCase version of the string.
-   */
-  private toPascalCase(str: string): string {
-    return str.replace(/(^\w|_\w)/g, (match) =>
-      match.replace("_", "").toUpperCase()
-    );
-  }
+  // /**
+  //  * Convert a string to PascalCase.
+  //  *
+  //  * @param str - The input string.
+  //  * @returns The PascalCase version of the string.
+  //  */
+  // private toPascalCase(str: string): string {
+  //   return str.replace(/(^\w|_\w)/g, (match) =>
+  //     match.replace("_", "").toUpperCase()
+  //   );
+  // }
 
   /**
    * Generate method implementation for a specific HTTP verb.
@@ -197,7 +205,7 @@ export class HandlerGenerator {
       if (content && content.schema) {
         if ("$ref" in content.schema) {
           // schema is a ReferenceObject
-          requestBodyType = this.extractRefName(content.schema.$ref);
+          requestBodyType = extractRefName(content.schema.$ref);
         } else if (
           content.schema.type === "object" &&
           content.schema.properties
@@ -246,7 +254,7 @@ export class HandlerGenerator {
 
         if ("$ref" in param.schema) {
           // param.schema is a ReferenceObject
-          const refName = this.extractRefName(param.schema.$ref);
+          const refName = extractRefName(param.schema.$ref);
           // Handle the reference if necessary
         } else {
           // param.schema is a SchemaObject
@@ -359,13 +367,13 @@ export class HandlerGenerator {
     }
   }
 
-  /**
-   * Extract reference name from a $ref string.
-   *
-   * @param ref - The $ref string.
-   * @returns The extracted reference name.
-   */
-  private extractRefName(ref: string): string {
-    return ref.split("/").pop() || "UnknownType";
-  }
+  // /**
+  //  * Extract reference name from a $ref string.
+  //  *
+  //  * @param ref - The $ref string.
+  //  * @returns The extracted reference name.
+  //  */
+  // private extractRefName(ref: string): string {
+  //   return ref.split("/").pop() || "UnknownType";
+  // }
 }

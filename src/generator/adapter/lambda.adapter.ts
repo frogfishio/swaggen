@@ -3,23 +3,26 @@ import * as path from "path";
 import * as fs from "fs";
 import ejs from "ejs";
 import { RouteInfo } from "./types";
-import { BaseGenerator } from "./base.adapter";
+import {
+  ensureOutputDirectory,
+  toPascalCase,
+  normalizeEndpoint,
+  getTemplatePath,
+} from "../util";
 
-export class LambdaAdapterGenerator extends BaseGenerator {
+export class LambdaAdapterGenerator {
   private routes: RouteInfo[] = [];
 
-  constructor(outputPath: string) {
-    super(outputPath);
-  }
+  constructor(private outputPath: string) {}
 
   public async generate(
     endpoint: string,
     methods: Record<string, any>,
     capabilities: string[]
   ): Promise<void> {
-    const normalizedEndpoint = this.normalizeEndpoint(endpoint);
-    const className = this.toPascalCase(normalizedEndpoint) + "Adapter";
-    const handlerClassName = this.toPascalCase(normalizedEndpoint) + "Handler";
+    const normalizedEndpoint = normalizeEndpoint(endpoint);
+    const className = toPascalCase(normalizedEndpoint) + "Adapter";
+    const handlerClassName = toPascalCase(normalizedEndpoint) + "Handler";
     const handlerFileName = normalizedEndpoint;
     const methodKeys = Object.keys(methods);
 
@@ -31,7 +34,7 @@ export class LambdaAdapterGenerator extends BaseGenerator {
     });
 
     // Render the template
-    const templatePath = this.getTemplatePath("lambda.ejs");
+    const templatePath = getTemplatePath("lambda.ejs");
     const template = fs.readFileSync(templatePath, "utf8");
     const adapterClassContent = ejs.render(template, {
       className,
@@ -49,7 +52,7 @@ export class LambdaAdapterGenerator extends BaseGenerator {
       normalizedEndpoint,
       "adapter.ts"
     );
-    this.ensureOutputDirectory(path.dirname(adapterFilePath));
+    ensureOutputDirectory(path.dirname(adapterFilePath));
     fs.writeFileSync(adapterFilePath, adapterClassContent.trim(), "utf8");
 
     console.log(`Created Lambda adapter: ${adapterFilePath}`);

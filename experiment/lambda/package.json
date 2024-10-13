@@ -9,7 +9,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@frogfish/swaggen-lambda": "^0.0.8",
-    "@frogfish/swaggen-types": "^0.0.20"
+    "@frogfish/swaggen-lambda": "^0.0.8"
+  },
+  "devDependencies": {
+    "@frogfish/swaggen-types": "^0.0.22",
+    "gulp": "^5.0.0",
+    "gulp-clean": "^0.4.0",
+    "gulp-json-transform": "^0.5.0",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "gulp-zip": "^6.0.0"
   }
 }

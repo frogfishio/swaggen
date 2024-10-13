@@ -11,5 +11,5 @@ export interface CapabilityFactory {
 export interface LoggingCapability extends Capability {
   error(message: string, ...params: any[]): void;
   warn(message: string, ...params: any[]): void;
-  info?(message: string, ...params: any[]): void; // Optional verbose logging
+  info(message: string, ...params: any[]): void; // Optional verbose logging
 }

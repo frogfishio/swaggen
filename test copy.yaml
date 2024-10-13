@@ -11,68 +11,36 @@ paths:
   /users:
     get:
       summary: Get all users
-      description: Retrieve a list of all users with optional filters
+      description: Retrieve a list of all users
       security:
         - bearerAuth: []
-      parameters:
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-          description: Limit the number of users returned
-        - name: status
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [active, inactive, banned]
-          description: Filter users by their status
-        - name: createdBefore
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date
-          description: Filter users created before a certain date
-        - name: metadata
-          in: query
-          required: false
-          schema:
-            type: object
-            additionalProperties:
-              type: string
-          description: A set of key-value pairs to filter users by their metadata
       responses:
-        "200":
+        '200':
           description: A JSON array of user objects
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/User"
-        "401":
+                  $ref: '#/components/schemas/User'
+        '401':
           description: Unauthorized - Missing or invalid authentication token
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Forbidden - You do not have permission to access this resource
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
     post:
       summary: Create a new user
@@ -85,103 +53,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: '#/components/schemas/User'
       responses:
-        "201":
+        '201':
           description: User created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "400":
+                $ref: '#/components/schemas/User'
+        '400':
           description: Bad Request - Invalid user data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: Unauthorized - Missing or invalid authentication token
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Forbidden - You do not have permission to access this resource
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  /users/extended:
-    post:
-      summary: Create a user with extra attributes
-      description: Create a new user with additional simple fields such as `source` and `isActive`
-      security:
-        - bearerAuth: []
-      requestBody:
-        description: User creation with additional fields
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                source:
-                  type: string
-                  example: "referral"
-                  description: "The source of the user signup"
-                isActive:
-                  type: boolean
-                  example: true
-                  description: "Whether the user is active or not"
-                user:
-                  $ref: "#/components/schemas/User"
-      responses:
-        "201":
-          description: User created successfully with additional attributes
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: "#/components/schemas/User"
-                  source:
-                    type: string
-                    example: "referral"
-                  isActive:
-                    type: boolean
-                    example: true
-        "400":
-          description: Bad Request - Invalid input
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized - Missing or invalid authentication token
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden - You do not have permission to access this resource
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   /users/{userId}:
     get:
@@ -196,55 +99,44 @@ paths:
           schema:
             type: string
             format: uuid
-            pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-        - name: include
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [addresses, profile, role]
-          style: form
-          explode: false
-          description: Comma-separated list of fields to include in the response
+            pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
       responses:
-        "200":
+        '200':
           description: A single user object
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "400":
+                $ref: '#/components/schemas/User'
+        '400':
           description: Bad Request - Invalid user ID format
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: Unauthorized - Missing or invalid authentication token
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Forbidden - You do not have permission to access this resource
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: User not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
 components:
   securitySchemes:
@@ -268,7 +160,7 @@ components:
           example: "John Doe"
           minLength: 3
           maxLength: 50
-          pattern: "^[a-zA-Z0-9 ]*$" # Name can include letters, numbers, and spaces
+          pattern: '^[a-zA-Z0-9 ]*$'  # Name can include letters, numbers, and spaces
           description: The full name of the user
         email:
           type: string
@@ -283,15 +175,15 @@ components:
     # Complex User schema that extends BaseUser
     User:
       allOf:
-        - $ref: "#/components/schemas/BaseUser"
+        - $ref: '#/components/schemas/BaseUser'
         - type: object
           properties:
             profile:
-              $ref: "#/components/schemas/Profile"
+              $ref: '#/components/schemas/Profile'
             addresses:
               type: array
               items:
-                $ref: "#/components/schemas/Address"
+                $ref: '#/components/schemas/Address'
             role:
               type: string
               enum: [admin, user, guest]
@@ -343,7 +235,7 @@ components:
         zipCode:
           type: string
           example: "94105"
-          pattern: "^[0-9]{5}(?:-[0-9]{4})?$" # US Zip Code format
+          pattern: '^[0-9]{5}(?:-[0-9]{4})?$'  # US Zip Code format
         country:
           type: string
           example: "USA"

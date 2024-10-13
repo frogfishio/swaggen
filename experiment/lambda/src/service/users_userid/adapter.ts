@@ -2,7 +2,7 @@
 // Lambda Handler for UsersUseridHandler
 
 import { UsersUseridHandler } from "./handler";
-import { Request, Response } from "../handlers/_";
+import { Request, Response } from "./handler.base";
 import { LambdaCapabilityFactory } from "@frogfish/swaggen-lambda"; // Import Lambda capability factory
 
 let capabilitiesInstance: Promise<any> | null = null;

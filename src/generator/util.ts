@@ -209,3 +209,24 @@ export function getTemplatePath(templateFile: string): string {
     path.join(__dirname, "..", "templates");
   return path.join(templateRoot, templateFile);
 }
+
+
+ /**
+   * Get the mapped method name based on the HTTP method and endpoint.
+   *
+   * @param method - The HTTP method (e.g., "get", "post").
+   * @param entityName - The base entity name derived from the endpoint.
+   * @returns The correct method name for the proxy (e.g., "createUser").
+   */
+ export function getMethodName(method: string, entityName: string): string {
+  const httpMethodMap: Record<string, string> = {
+    post: "create",
+    get: "read",
+    put: "replace",
+    patch: "modify",
+    delete: "delete",
+  };
+  const methodName =
+    httpMethodMap[method.toLowerCase()] || method.toLowerCase();
+  return `${methodName}${toPascalCase(entityName)}`;
+}

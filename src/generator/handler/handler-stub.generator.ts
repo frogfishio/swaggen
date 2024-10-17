@@ -6,6 +6,7 @@ import {
   toPascalCase,
   normalizeEndpoint,
   extractEntityName,
+  getMethodName,
 } from "../util";
 
 export class HandlerStubGenerator {
@@ -74,7 +75,7 @@ export class HandlerStubGenerator {
 
     const stubMethods = Object.keys(methods)
       .map((method) => {
-        const methodName = this.getMethodName(method, entityName);
+        const methodName = getMethodName(method, entityName);
         const requestType = this.getRequestTypeName(
           method,
           pascalCaseEntityName
@@ -122,26 +123,6 @@ export class HandlerStubGenerator {
    */
   private getResponseTypeName(method: string, entityName: string): string {
     return `${toPascalCase(method)}${entityName}Response`;
-  }
-
-  /**
-   * Get the mapped method name based on the HTTP method and endpoint.
-   *
-   * @param method - The HTTP method (e.g., "get", "post").
-   * @param entityName - The base entity name derived from the endpoint.
-   * @returns The correct method name for the proxy (e.g., "createUser").
-   */
-  private getMethodName(method: string, entityName: string): string {
-    const httpMethodMap: Record<string, string> = {
-      post: "create",
-      get: "read",
-      put: "replace",
-      patch: "modify",
-      delete: "delete",
-    };
-    const methodName =
-      httpMethodMap[method.toLowerCase()] || method.toLowerCase();
-    return `${methodName}${toPascalCase(entityName)}`;
   }
 
   /**

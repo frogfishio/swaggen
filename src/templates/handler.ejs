@@ -11,6 +11,8 @@ import { <%= type %> } from "../schema/<%= type.toLowerCase() %>";
 
 export class <%= className %> extends BaseHandler {
 
+  private proxy: Proxy = new Stub();
+
 <% errorOverrides.forEach(errorMethod => { %>
   <%- errorMethod %>
 <% }); %>

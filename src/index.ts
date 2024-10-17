@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { Command } from "commander";
 import { HandlerGenerator } from "./generator/handler/handler.generator";
-import { SchemaGenerator } from "./generator/schema";
+import { SchemaGenerator } from "./generator/schema/schema.generator";
 import { AdapterGenerator } from "./generator/adapter/adapter.generator";
 import { DeploymentGenerator } from "./generator/deployment/deployment"; // Import the DeploymentGenerator class
 

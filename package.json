@@ -1,6 +1,6 @@
 {
   "name": "@frogfish/swaggen",
-  "version": "0.0.22",
+  "version": "0.0.26",
   "main": "index.js",
   "scripts": {
     "build": "tsc",

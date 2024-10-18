@@ -72,7 +72,7 @@ gulp.task("copy-assets", () => {
 gulp.task("copy-templates", () => {
   return gulp
     .src(paths.templates, { base: "src/templates" })
-    .pipe(gulp.dest(path.join(paths.dist, "templates")));
+    .pipe(gulp.dest(path.join(paths.dist, "generator/templates")));
 });
 
 // Task to copy and modify package.json

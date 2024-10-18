@@ -1,0 +1,12 @@
+- hosts: localhost
+  tasks:
+<% routes.forEach(route => { %>
+    - name: Register Lambda function for <%= route.endpoint %>
+      aws_lambda:
+        name: "<%= route.endpoint.replace(/^\//, "").replace(/\//g, "_").toLowerCase() %>_function"
+        state: present
+        function_name: "<%= route.endpoint.replace(/^\//, "").replace(/\//g, "_").toLowerCase() %>"
+        role: "{{ aws_lambda_role }}"
+        handler: "<%= route.endpoint.replace(/^\//, "").replace(/\//g, "_").toLowerCase() %>Adapter.<%= route.methods[0].toLowerCase() %>"
+        runtime: nodejs12.x
+<% }) %>

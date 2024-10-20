@@ -75,7 +75,7 @@ export class HandlerStubGenerator {
 
     const stubMethods = Object.keys(methods)
       .map((method) => {
-        const methodName = getMethodName(method, entityName);
+        const methodName = getMethodName(method, normalizedEndpoint);
         const requestType = this.getRequestTypeName(
           method,
           pascalCaseEntityName

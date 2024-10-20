@@ -65,7 +65,7 @@ export class HandlerProxyGenerator {
 
     const proxyMethods = Object.keys(methods)
       .map((method) => {
-        const methodName = this.getMethodName(method, entityName);
+        const methodName = this.getMethodName(method, normalizedEndpoint);
         const requestType = this.getRequestTypeName(
           method,
           pascalCaseEntityName

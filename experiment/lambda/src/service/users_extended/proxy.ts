@@ -4,6 +4,6 @@ import { PostExtendedRequest, PostExtendedResponse } from "./handler";
 import { User } from "../schema/user";
 
 export interface UsersExtendedProxy {
-  createExtended(request: PostExtendedRequest): Promise<PostExtendedResponse>;
+  createUsersExtended(request: PostExtendedRequest): Promise<PostExtendedResponse>;
 }
     

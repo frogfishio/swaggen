@@ -6,11 +6,11 @@ import { User } from "../schema/user";
 
 export class UsersStub implements UsersProxy {
   
-  async readUser(request: void): Promise<GetUserResponse> {
+  async readUsers(request: void): Promise<GetUserResponse> {
     return Promise.reject("Not implemented");
   }
 
-  async createUser(request: PostUserRequest): Promise<PostUserResponse> {
+  async createUsers(request: PostUserRequest): Promise<PostUserResponse> {
     return Promise.reject("Not implemented");
   }
 }

@@ -1,6 +1,6 @@
 
 // Auto-generated stub class for UsersExtendedStub
-import { PostExtendedRequest, PostExtendedResponse } from "./handler";
+import { PostExtendedRequest, PostExtendedResponse } from "./proxy";
 import { UsersExtendedProxy } from "./proxy";
 import { User } from "../schema/user";
 

@@ -30,13 +30,14 @@ export class HandlerProxyGenerator {
       endpoint
     ); // Generate proxy methods and collect used types
 
-    // Generate import statements for used types
-    const typeImports = this.generateTypeImports(usedTypes);
+    // // Generate import statements for used types
+    // const typeImports = this.generateTypeImports(usedTypes);
 
     // Combine all parts into a proxy.ts file content
     const proxyContent = this.buildProxyContent(
-      typeImports,
+      // typeImports,
       imports,
+      interfaces, // Add the interfaces directly to the proxy content
       className,
       proxyMethods
     );
@@ -138,7 +139,7 @@ export class HandlerProxyGenerator {
    * @param usedTypes - A set of used request/response types (e.g., "PostUserRequest", "GetUserResponse").
    * @returns A string representing the import statements.
    */
-  private generateTypeImports(usedTypes: Set<string>): string {
+  private xgenerateTypeImports(usedTypes: Set<string>): string {
     if (usedTypes.size === 0) return "";
     const typesArray = Array.from(usedTypes).sort(); // Sort for consistent order
     return `import { ${typesArray.join(", ")} } from "./handler";`;
@@ -154,15 +155,19 @@ export class HandlerProxyGenerator {
    * @returns The complete content for the proxy file.
    */
   private buildProxyContent(
-    typeImports: string,
+    // typeImports: string,
     handlerImports: string,
+    interfaces: string, // Add interfaces parameter
     className: string,
     methods: string
   ): string {
     return `
 // Auto-generated proxy for ${className}
-${typeImports}
+
 ${handlerImports}
+
+// Auto-generated interfaces
+${interfaces}
 
 export interface ${className} {
   ${methods}

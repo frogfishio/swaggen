@@ -134,7 +134,7 @@ export class HandlerStubGenerator {
   private generateTypeImports(usedTypes: Set<string>): string {
     if (usedTypes.size === 0) return "";
     const typesArray = Array.from(usedTypes).sort(); // Sort for consistent order
-    return `import { ${typesArray.join(", ")} } from "./handler";`;
+    return `import { ${typesArray.join(", ")} } from "./proxy";`;
   }
 
   /**

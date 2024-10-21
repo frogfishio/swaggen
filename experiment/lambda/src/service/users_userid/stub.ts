@@ -1,6 +1,6 @@
 
 // Auto-generated stub class for UsersUseridStub
-import { GetUserResponse } from "./handler";
+import { GetUserResponse } from "./proxy";
 import { UsersUseridProxy } from "./proxy";
 import { User } from "../schema/user";
 

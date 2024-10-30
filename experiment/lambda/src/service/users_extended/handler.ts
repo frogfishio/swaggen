@@ -17,7 +17,7 @@ export class UsersExtendedHandler extends BaseHandler {
 
 	private proxy: UsersExtendedProxy = new UsersExtendedStub();
 
-  public async post(req: Request): Promise<Response> {
+  public async createUsersExtended(req: Request): Promise<Response> {
     // Proxy method signature: createUsersExtended(request: PostUsersExtendedRequest): Promise<PostUsersExtendedResponse>;
     const result = await this.proxy.createUsersExtended();
     // TODO: Implement POST logic

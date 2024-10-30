@@ -6,7 +6,12 @@ import {
   toPascalCase,
   normalizeEndpoint,
   extractEntityName,
+  getMethodName,
+  resolveType,
+  extractRefType,
+  getResponseTypeName,
 } from "../util";
+import { OpenAPIV3 } from "openapi-types";
 
 export class HandlerProxyGenerator {
   constructor(private outputPath: string) {}
@@ -25,21 +30,16 @@ export class HandlerProxyGenerator {
       methods
     ); // Fetch the correct types
 
-    const { proxyMethods, usedTypes } = this.generateProxyMethods(
-      methods,
-      endpoint
-    ); // Generate proxy methods and collect used types
-
-    // // Generate import statements for used types
-    // const typeImports = this.generateTypeImports(usedTypes);
+    const { proxyMethods, usedTypes, queryInterfaces } =
+      this.generateProxyMethods(methods, endpoint); // Generate proxy methods, collect used types, and query parameter interfaces
 
     // Combine all parts into a proxy.ts file content
     const proxyContent = this.buildProxyContent(
-      // typeImports,
       imports,
-      interfaces, // Add the interfaces directly to the proxy content
+      interfaces,
       className,
-      proxyMethods
+      proxyMethods,
+      queryInterfaces // Now passing queryInterfaces as an argument
     );
 
     // Write the proxy.ts file
@@ -48,101 +48,141 @@ export class HandlerProxyGenerator {
     console.log(`Created proxy file: ${proxyFilePath}`);
   }
 
-  /**
-   * Generate proxy method signatures using the correct request and response types.
-   *
-   * @param methods - The HTTP methods for the endpoint.
-   * @param endpoint - The API endpoint (e.g., "/users").
-   * @returns An object containing the proxy methods and the used types.
-   */
   private generateProxyMethods(
-    methods: Record<string, any>,
+    methods: Record<string, OpenAPIV3.OperationObject>,
     endpoint: string
-  ): { proxyMethods: string; usedTypes: Set<string> } {
+  ): {
+    proxyMethods: string;
+    usedTypes: Set<string>;
+    queryInterfaces: string[];
+  } {
     const entityName = extractEntityName(endpoint);
-    const normalizedEndpoint = normalizeEndpoint(endpoint);
     const pascalCaseEntityName = toPascalCase(entityName);
     const usedTypes = new Set<string>(); // To collect used types
+    const queryInterfaces: string[] = []; // To collect query parameter interfaces
 
-    const proxyMethods = Object.keys(methods)
-      .map((method) => {
-        const methodName = this.getMethodName(method, normalizedEndpoint);
-        const requestType = this.getRequestTypeName(
-          method,
-          pascalCaseEntityName
-        );
-        const responseType = this.getResponseTypeName(
-          method,
-          pascalCaseEntityName
-        );
+    const proxyMethods = Object.entries(methods)
+      .map(([method, methodDef]) => {
+        const pathParams =
+          (
+            methodDef.parameters as
+              | (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[]
+              | undefined
+          )
+            ?.filter(
+              (param): param is OpenAPIV3.ParameterObject =>
+                "in" in param && param.in === "path"
+            )
+            .map((param: OpenAPIV3.ParameterObject) => {
+              let paramType = "string"; // Default to string
+              if (param.schema) {
+                if ("$ref" in param.schema) {
+                  paramType = "any"; // Or resolve the reference name if needed
+                } else {
+                  paramType =
+                    (param.schema as OpenAPIV3.SchemaObject).type === "integer"
+                      ? "number"
+                      : (param.schema as OpenAPIV3.SchemaObject).type ||
+                        "string";
+                }
+              }
 
-        // Add request and response types to the usedTypes set
-        if (requestType !== "void") usedTypes.add(requestType);
+              // Ensure parameter names start with a lowercase letter
+              const paramName =
+                param.name.charAt(0).toLowerCase() + param.name.slice(1);
+
+              return { name: paramName, type: paramType };
+            }) || [];
+
+        // Process query parameters and build interface if any exist
+        const queryParams =
+          (
+            methodDef.parameters as
+              | (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[]
+              | undefined
+          )
+            ?.filter(
+              (param): param is OpenAPIV3.ParameterObject =>
+                "in" in param && param.in === "query"
+            )
+            .map((param: OpenAPIV3.ParameterObject) => {
+              let paramType = "string"; // Default to string
+              if (param.schema) {
+                if ("$ref" in param.schema) {
+                  paramType = "any"; // Or resolve the reference name if needed
+                } else if (
+                  param.schema.type === "array" &&
+                  param.schema.items
+                ) {
+                  paramType = `${(param.schema.items as OpenAPIV3.SchemaObject).type === "integer" ? "number" : (param.schema.items as OpenAPIV3.SchemaObject).type}[]`;
+                } else {
+                  paramType =
+                    param.schema.type === "integer"
+                      ? "number"
+                      : (param.schema as OpenAPIV3.SchemaObject).type ||
+                        "string";
+                }
+              }
+              const paramName = param.name;
+              return `${paramName}${param.required ? "" : "?"}: ${paramType}`;
+            }) || [];
+
+        // Generate a query params interface if we have query parameters
+        let queryType = "void"; // Default to void if no query params
+        if (queryParams.length > 0) {
+          const interfaceName = `${toPascalCase(method)}${pascalCaseEntityName}QueryParams`;
+          const queryParamsInterface = `interface ${interfaceName} { ${queryParams.join("; ")} }`;
+          queryInterfaces.push(queryParamsInterface);
+          queryType = interfaceName; // Use the interface as the query type
+        }
+
+        // Handle the request body (post parameter) if defined
+        let dataType = "void";
+        if (
+          ["post", "put", "patch"].includes(method.toLowerCase()) &&
+          methodDef.requestBody
+        ) {
+          const requestBody =
+            methodDef.requestBody as OpenAPIV3.RequestBodyObject;
+          const content = requestBody.content["application/json"]; // Assuming JSON body
+          if (content && content.schema) {
+            if ("$ref" in content.schema) {
+              dataType = extractRefType(content.schema.$ref); // Reference type from $ref
+              usedTypes.add(dataType);
+            } else {
+              dataType = `${toPascalCase(method)}${pascalCaseEntityName}RequestBody`;
+              const bodyInterface = `interface ${dataType} ${resolveType(content.schema as OpenAPIV3.SchemaObject, usedTypes)}`;
+              queryInterfaces.push(bodyInterface);
+            }
+          }
+        }
+
+        const methodName = getMethodName(method, endpoint);
+        const responseType = getResponseTypeName(method, pascalCaseEntityName);
+
+        // Add response type to the usedTypes set
         usedTypes.add(responseType);
 
-        return `${methodName}(request: ${requestType}): Promise<${responseType}>;`;
+        // Construct parameter string with types, excluding "void" parameters
+        const paramString = pathParams
+          .filter((param) => param.type !== "void") // Exclude void parameters
+          .map((param) => `${param.name}: ${param.type}`)
+          .join(", ");
+
+        // Construct the final method parameters: path, query, and data parameters
+        const finalParams = [
+          paramString,
+          queryType !== "void" ? `query: ${queryType}` : "",
+          dataType !== "void" ? `data: ${dataType}` : "",
+        ]
+          .filter((param) => param) // Exclude empty entries
+          .join(", ");
+
+        return `${methodName}(${finalParams}): Promise<${responseType}>;`;
       })
       .join("\n");
 
-    return { proxyMethods, usedTypes };
-  }
-
-  /**
-   * Get the correct request type name (following handler-types.generator.ts logic).
-   *
-   * @param method - The HTTP method (e.g., "post", "get").
-   * @param entityName - The entity name in PascalCase (e.g., "User").
-   * @returns The correct request type name (e.g., "PostUserRequest").
-   */
-  private getRequestTypeName(method: string, entityName: string): string {
-    const methodsWithoutBody = ["get", "delete", "head", "options"];
-    if (methodsWithoutBody.includes(method.toLowerCase())) {
-      return "void"; // No request body for these methods
-    }
-    return `${toPascalCase(method)}${entityName}Request`;
-  }
-
-  /**
-   * Get the correct response type name (following handler-types.generator.ts logic).
-   *
-   * @param method - The HTTP method (e.g., "post", "get").
-   * @param entityName - The entity name in PascalCase (e.g., "User").
-   * @returns The correct response type name (e.g., "PostUserResponse").
-   */
-  private getResponseTypeName(method: string, entityName: string): string {
-    return `${toPascalCase(method)}${entityName}Response`;
-  }
-
-  /**
-   * Get the mapped method name based on the HTTP method and endpoint.
-   *
-   * @param method - The HTTP method (e.g., "get", "post").
-   * @param entityName - The base entity name derived from the endpoint.
-   * @returns The correct method name for the proxy (e.g., "createUser").
-   */
-  private getMethodName(method: string, entityName: string): string {
-    const httpMethodMap: Record<string, string> = {
-      post: "create",
-      get: "read",
-      put: "replace",
-      patch: "modify",
-      delete: "delete",
-    };
-    const methodName =
-      httpMethodMap[method.toLowerCase()] || method.toLowerCase();
-    return `${methodName}${toPascalCase(entityName)}`;
-  }
-
-  /**
-   * Generates import statements for the used types in the proxy.
-   *
-   * @param usedTypes - A set of used request/response types (e.g., "PostUserRequest", "GetUserResponse").
-   * @returns A string representing the import statements.
-   */
-  private xgenerateTypeImports(usedTypes: Set<string>): string {
-    if (usedTypes.size === 0) return "";
-    const typesArray = Array.from(usedTypes).sort(); // Sort for consistent order
-    return `import { ${typesArray.join(", ")} } from "./handler";`;
+    return { proxyMethods, usedTypes, queryInterfaces };
   }
 
   /**
@@ -155,23 +195,26 @@ export class HandlerProxyGenerator {
    * @returns The complete content for the proxy file.
    */
   private buildProxyContent(
-    // typeImports: string,
     handlerImports: string,
-    interfaces: string, // Add interfaces parameter
+    interfaces: string,
     className: string,
-    methods: string
+    methods: string,
+    queryInterfaces: string[]
   ): string {
     return `
-// Auto-generated proxy for ${className}
-
-${handlerImports}
-
-// Auto-generated interfaces
-${interfaces}
-
-export interface ${className} {
-  ${methods}
-}
+  // Auto-generated proxy for ${className}
+  
+  ${handlerImports}
+  
+  // Auto-generated interfaces
+  ${interfaces}
+  
+  // Query parameter interfaces
+  ${queryInterfaces.join("\n")}
+  
+  export interface ${className} {
+    ${methods}
+  }
     `;
   }
 

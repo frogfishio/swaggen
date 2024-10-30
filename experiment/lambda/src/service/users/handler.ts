@@ -20,14 +20,14 @@ export class UsersHandler extends BaseHandler {
 
 	private proxy: UsersProxy = new UsersStub();
 
-  public async get(req: Request): Promise<Response> {
+  public async readUsers(req: Request): Promise<Response> {
     // Proxy method signature: readUser(request: void): Promise<GetUserResponse>;
     const result = await this.proxy.readUsers();
     // TODO: Implement GET logic
     return new Response(200, { "Content-Type": "application/json" }, { message: "GET method called" });
   }
 
-  public async post(req: Request): Promise<Response> {
+  public async createUsers(req: Request): Promise<Response> {
     // Proxy method signature: createUser(request: PostUserRequest): Promise<PostUserResponse>;
     const result = await this.proxy.createUsers();
     // TODO: Implement POST logic

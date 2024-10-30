@@ -72,6 +72,17 @@ export function extractRefName(ref: string): string {
 }
 
 /**
+ * Extracts and formats the reference type from a $ref string.
+ *
+ * @param ref - The $ref string, e.g., "#/components/schemas/User"
+ * @returns The extracted and formatted type name, e.g., "User".
+ */
+export function extractRefType(ref: string): string {
+  const refName = ref.split("/").pop() || "UnknownType";
+  return toPascalCase(refName); // Ensure PascalCase for TypeScript type consistency
+}
+
+/**
  * Checks if the schema is a ReferenceObject.
  *
  * @param schema - The OpenAPI schema object.
@@ -206,19 +217,19 @@ export function generateProxyMethods(
 export function getTemplatePath(templateFile: string): string {
   const templateRoot =
     process.env.SWAGGEN_TEMPLATE_ROOT ||
-    path.join(__dirname, "..", "templates");
+    // path.join(__dirname, "..", "templates");
+    path.join(__dirname, "swaggen/templates");
   return path.join(templateRoot, templateFile);
 }
 
-
- /**
-   * Get the mapped method name based on the HTTP method and endpoint.
-   *
-   * @param method - The HTTP method (e.g., "get", "post").
-   * @param entityName - The base entity name derived from the endpoint.
-   * @returns The correct method name for the proxy (e.g., "createUser").
-   */
- export function getMethodName(method: string, entityName: string): string {
+/**
+ * Get the mapped method name based on the HTTP method and endpoint.
+ *
+ * @param method - The HTTP method (e.g., "get", "post").
+ * @param entityName - The base entity name derived from the endpoint.
+ * @returns The correct method name for the proxy (e.g., "createUser").
+ */
+export function xgetMethodName(method: string, entityName: string): string {
   const httpMethodMap: Record<string, string> = {
     post: "create",
     get: "read",
@@ -229,4 +240,55 @@ export function getTemplatePath(templateFile: string): string {
   const methodName =
     httpMethodMap[method.toLowerCase()] || method.toLowerCase();
   return `${methodName}${toPascalCase(entityName)}`;
+}
+
+export function getMethodName(method: string, endpoint: string): string {
+  const httpMethodMap: Record<string, string> = {
+    post: "create",
+    get: "read",
+    put: "replace",
+    patch: "modify",
+    delete: "delete",
+  };
+
+  // Map HTTP method to meaningful prefix (e.g., "get" -> "read")
+  const methodPrefix =
+    httpMethodMap[method.toLowerCase()] || method.toLowerCase();
+
+  // Extract entity name from the endpoint (remove the leading slash and any parameters)
+  const parts = endpoint
+    .split("/")
+    .filter((part) => part && !part.startsWith("{"));
+  const entityName =
+    parts.length > 0 ? toPascalCase(parts[parts.length - 1]) : "Entity";
+
+  // Extract path parameters from the endpoint, matching `{param}`
+  const pathParams = Array.from(endpoint.matchAll(/\{(\w+)\}/g)).map(
+    (match) => match[1]
+  );
+
+  // Format path parameters with "By" + PascalCase
+  const formattedPathParams = pathParams
+    .map((param) => `By${toPascalCase(param)}`)
+    .join("");
+
+  return `${methodPrefix}${entityName}${formattedPathParams}`;
+}
+
+/**
+ * Get the correct response type name (following handler-types.generator.ts logic).
+ *
+ * @param method - The HTTP method (e.g., "post", "get").
+ * @param entityName - The entity name in PascalCase (e.g., "User").
+ * @returns The correct response type name (e.g., "PostUserResponse").
+ */
+export function getResponseTypeName(
+  method: string,
+  entityName: string
+): string {
+  return `${toPascalCase(method)}${entityName}Response`;
+}
+
+export function ensureDirectoryExists(dir: string): void {
+  ensureOutputDirectory(dir);
 }

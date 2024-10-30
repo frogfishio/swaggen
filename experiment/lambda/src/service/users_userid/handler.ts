@@ -17,7 +17,7 @@ export class UsersUseridHandler extends BaseHandler {
 
 	private proxy: UsersUseridProxy = new UsersUseridStub();
 
-  public async get(req: Request): Promise<Response> {
+  public async readUsersUserid(req: Request): Promise<Response> {
     // Proxy method signature: readUsersUserid(request: void): Promise<GetUsersUseridResponse>;
     const userId = req.path.split("/").pop() || ""; // Fallback to empty string if undefined
     if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(userId)) {

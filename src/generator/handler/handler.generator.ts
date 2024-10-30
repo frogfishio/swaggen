@@ -17,6 +17,7 @@ import {
   capitalizeFirstLetter,
   getMethodName,
   extractEntityName,
+  getTemplatePath
 } from "../util";
 
 // Replace the local `toPascalCase` and `extractRefName` with imports from `handlers-util.ts`
@@ -198,13 +199,13 @@ export class HandlerGenerator {
     return schemaImportLines.join("\n");
   }
 
-  // Get the template path
-  private getTemplatePath(templateFile: string): string {
-    const templateRoot =
-      process.env.SWAGGEN_TEMPLATE_ROOT ||
-      path.join(__dirname, "..", "templates");
-    return path.join(templateRoot, templateFile);
-  }
+  // // Get the template path
+  // private getTemplatePath(templateFile: string): string {
+  //   const templateRoot =
+  //     process.env.SWAGGEN_TEMPLATE_ROOT ||
+  //     path.join(__dirname, "..", "templates");
+  //   return path.join(templateRoot, templateFile);
+  // }
 
   /**
    * Generates handler.base.ts with predefined content.
@@ -212,7 +213,7 @@ export class HandlerGenerator {
    * @param filePath - Path to the handler.base.ts file.
    */
   private generateBaseFile(filePath: string) {
-    const templatePath = this.getTemplatePath("base.ejs");
+    const templatePath = getTemplatePath("base.ejs");
     const template = fs.readFileSync(templatePath, "utf8");
 
     // Render the base.ejs template (you can pass any necessary variables here)
@@ -242,6 +243,72 @@ export class HandlerGenerator {
    * @param className - Name of the handler class.
    * @returns A string containing the method implementation.
    */
+  // private generateMethodImplementation(
+  //   method: string,
+  //   methodSpec: OpenAPIV3.OperationObject,
+  //   className: string,
+  //   usedTypes: Set<string>,
+  //   schemaTypes: Set<string>
+  // ): string {
+  //   // Extract path parameter validation logic
+  //   const validationCode = this.generateValidationCode(methodSpec.parameters);
+
+  //   // Get the type for request body (if any)
+  //   let requestBodyType = "any";
+  //   if (methodSpec.requestBody) {
+  //     const requestBody = methodSpec.requestBody as OpenAPIV3.RequestBodyObject;
+  //     const content = requestBody.content["application/json"];
+  //     if (content && content.schema) {
+  //       if ("$ref" in content.schema) {
+  //         // Schema is a ReferenceObject, extract the reference name
+  //         requestBodyType = extractRefName(content.schema.$ref);
+  //         schemaTypes.add(requestBodyType); // Track as a schema type
+  //       } else if (
+  //         content.schema.type === "object" &&
+  //         content.schema.properties
+  //       ) {
+  //         // If the schema is an inline object without $ref, handle it differently
+  //         requestBodyType = "any";
+  //       }
+  //     }
+  //   }
+
+  //   // Generate proxy method signature for the comment
+  //   const proxyMethodSignature = this.generateProxyMethodSignature(
+  //     method,
+  //     className,
+  //     usedTypes // Pass usedTypes here as well
+  //   );
+
+  //   // Add request type if it is not "any" or a schema
+  //   if (requestBodyType !== "any" && !schemaTypes.has(requestBodyType)) {
+  //     usedTypes.add(requestBodyType);
+  //   }
+
+  //   // Construct the method implementation
+  //   let methodImpl = `  public async ${method}(req: Request): Promise<Response> {\n`;
+
+  //   // Add proxy method signature as a comment
+  //   methodImpl += `    // Proxy method signature: ${proxyMethodSignature}\n`;
+
+  //   if (validationCode.trim()) {
+  //     methodImpl += `${validationCode}`;
+  //   }
+
+  //   methodImpl += `    const result = await this.proxy.${getMethodName(method, className)}();\n`;
+
+  //   methodImpl += `    // TODO: Implement ${method.toUpperCase()} logic\n`;
+
+  //   if (methodSpec.requestBody && requestBodyType !== "any") {
+  //     methodImpl += `    // If request body type is needed: (req.body as ${requestBodyType})\n`;
+  //   }
+
+  //   methodImpl += `    return new Response(200, { "Content-Type": "application/json" }, { message: "${method.toUpperCase()} method called" });\n`;
+  //   methodImpl += `  }`;
+
+  //   return methodImpl;
+  // }
+
   private generateMethodImplementation(
     method: string,
     methodSpec: OpenAPIV3.OperationObject,
@@ -249,81 +316,83 @@ export class HandlerGenerator {
     usedTypes: Set<string>,
     schemaTypes: Set<string>
   ): string {
-    // Extract path parameter validation logic
+    // Extract path parameters for naming
+    const pathParams = (methodSpec.parameters || [])
+      .filter((param) => "in" in param && param.in === "path")
+      .map((param) => (param as OpenAPIV3.ParameterObject).name);
+  
+    // Validation code for path parameters
     const validationCode = this.generateValidationCode(methodSpec.parameters);
-
-    // Get the type for request body (if any)
+  
+    // Determine request body type
     let requestBodyType = "any";
     if (methodSpec.requestBody) {
       const requestBody = methodSpec.requestBody as OpenAPIV3.RequestBodyObject;
       const content = requestBody.content["application/json"];
       if (content && content.schema) {
         if ("$ref" in content.schema) {
-          // Schema is a ReferenceObject, extract the reference name
           requestBodyType = extractRefName(content.schema.$ref);
-          schemaTypes.add(requestBodyType); // Track as a schema type
-        } else if (
-          content.schema.type === "object" &&
-          content.schema.properties
-        ) {
-          // If the schema is an inline object without $ref, handle it differently
+          schemaTypes.add(requestBodyType);
+        } else if (content.schema.type === "object" && content.schema.properties) {
           requestBodyType = "any";
         }
       }
     }
-
-    // Generate proxy method signature for the comment
+  
+    // Generate proxy method signature as a comment
     const proxyMethodSignature = this.generateProxyMethodSignature(
       method,
       className,
-      usedTypes // Pass usedTypes here as well
+      pathParams,
+      usedTypes
     );
-
-    // Add request type if it is not "any" or a schema
+  
+    // Track request type if it's not "any" or already in schemaTypes
     if (requestBodyType !== "any" && !schemaTypes.has(requestBodyType)) {
       usedTypes.add(requestBodyType);
     }
-
+  
     // Construct the method implementation
-    let methodImpl = `  public async ${method}(req: Request): Promise<Response> {\n`;
-
+    const methodName = getMethodName(method, className);
+    let methodImpl = `  public async ${methodName}(req: Request): Promise<Response> {\n`;
+  
     // Add proxy method signature as a comment
     methodImpl += `    // Proxy method signature: ${proxyMethodSignature}\n`;
-
+  
     if (validationCode.trim()) {
       methodImpl += `${validationCode}`;
     }
-
-    methodImpl += `    const result = await this.proxy.${getMethodName(method, className)}();\n`;
-
+  
+    methodImpl += `    const result = await this.proxy.${methodName}();\n`;
     methodImpl += `    // TODO: Implement ${method.toUpperCase()} logic\n`;
-
+  
     if (methodSpec.requestBody && requestBodyType !== "any") {
       methodImpl += `    // If request body type is needed: (req.body as ${requestBodyType})\n`;
     }
-
+  
     methodImpl += `    return new Response(200, { "Content-Type": "application/json" }, { message: "${method.toUpperCase()} method called" });\n`;
     methodImpl += `  }`;
-
+  
     return methodImpl;
   }
 
   private generateProxyMethodSignature(
     method: string,
     endpoint: string,
-    usedTypes: Set<string> // Added parameter to track used types
+    pathParams: string[], // Add pathParams parameter
+    usedTypes: Set<string>
   ): string {
-    const entityName = extractEntityName(endpoint); // Extract singular entity name from endpoint
+    const entityName = extractEntityName(endpoint);
     const methodName = getMethodName(method, entityName);
     const requestType = this.getRequestTypeName(method, endpoint);
     const responseType = this.getResponseTypeName(method, endpoint);
-
+  
     // Track request and response types
     if (requestType !== "void") {
       usedTypes.add(requestType);
     }
     usedTypes.add(responseType);
-
+  
     // Format the method signature
     return `${methodName}(request: ${requestType}): Promise<${responseType}>;`;
   }

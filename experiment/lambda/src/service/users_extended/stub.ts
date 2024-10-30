@@ -1,13 +1,17 @@
 
-// Auto-generated stub class for UsersExtendedStub
-import { PostExtendedRequest, PostExtendedResponse } from "./proxy";
+  // Auto-generated stub class for UsersExtendedStub
+  import { PostExtendedResponse } from "./proxy";
+
 import { UsersExtendedProxy } from "./proxy";
 import { User } from "../schema/user";
-
-export class UsersExtendedStub implements UsersExtendedProxy {
   
-  async createUsersExtended(request: PostExtendedRequest): Promise<PostExtendedResponse> {
-    return Promise.reject("Not implemented");
-  }
-}
+  // Query parameter interfaces
+  interface PostExtendedRequestBody { source?: string; isActive?: boolean; user?: User; }
+  
+  export class UsersExtendedStub implements UsersExtendedProxy {
     
+    async createExtended(data: PostExtendedRequestBody): Promise<PostExtendedResponse> {
+      return Promise.reject("Not implemented");
+    }
+  }
+      

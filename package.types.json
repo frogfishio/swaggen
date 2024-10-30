@@ -1,6 +1,6 @@
 {
   "name": "@frogfish/swaggen-types",
-  "version": "0.0.28",
+  "version": "0.0.37",
   "description": "TypeScript definitions for swaggen",
   "types": "types.d.ts",
   "author": "Your Name",

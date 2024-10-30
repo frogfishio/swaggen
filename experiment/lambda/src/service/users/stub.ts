@@ -1,17 +1,21 @@
 
-// Auto-generated stub class for UsersStub
-import { GetUserResponse, PostUserRequest, PostUserResponse } from "./proxy";
+  // Auto-generated stub class for UsersStub
+  import { GetUserResponse, PostUserResponse } from "./proxy";
+
 import { UsersProxy } from "./proxy";
 import { User } from "../schema/user";
-
-export class UsersStub implements UsersProxy {
   
-  async readUsers(request: void): Promise<GetUserResponse> {
-    return Promise.reject("Not implemented");
-  }
-
-  async createUsers(request: PostUserRequest): Promise<PostUserResponse> {
-    return Promise.reject("Not implemented");
-  }
-}
+  // Query parameter interfaces
+  interface GetUserQueryParams { limit?: number; status?: string; createdBefore?: string; metadata?: object }
+  
+  export class UsersStub implements UsersProxy {
     
+    async readUsers(query: GetUserQueryParams): Promise<GetUserResponse> {
+      return Promise.reject("Not implemented");
+    }
+
+    async createUsers(data: User): Promise<PostUserResponse> {
+      return Promise.reject("Not implemented");
+    }
+  }
+      

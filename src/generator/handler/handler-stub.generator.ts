@@ -67,13 +67,18 @@ export class HandlerStubGenerator {
     usedTypes: Set<string>;
     queryInterfaces: string[];
   } {
-    const entityName = extractEntityName(endpoint);
-    const pascalCaseEntityName = toPascalCase(entityName);
+    // const entityName = extractEntityName(endpoint);
+    // const pascalCaseEntityName = toPascalCase(entityName);
     const usedTypes = new Set<string>();
     const queryInterfaces: string[] = [];
 
+    // console.log(`ZZZ Generating stub methods for ${entityName}...`);
+
     const stubMethods = Object.entries(methods)
       .map(([method, methodDef]) => {
+        const entityName = getMethodName(method, endpoint);
+        const pascalCaseEntityName = toPascalCase(entityName);
+
         const pathParams =
           (
             methodDef.parameters as
@@ -163,7 +168,7 @@ export class HandlerStubGenerator {
         }
 
         const methodName = getMethodName(method, endpoint);
-        const responseType = getResponseTypeName(method, pascalCaseEntityName);
+        const responseType = pascalCaseEntityName + "Response"
 
         usedTypes.add(responseType);
 
@@ -204,11 +209,6 @@ export class HandlerStubGenerator {
 
       // Check if the type already exists in existing imports
       if (
-        // type.startsWith("Post") ||
-        // type.startsWith("Get") ||
-        // type.startsWith("Put") ||
-        // type.startsWith("Patch")
-
         type.startsWith("Create") ||
         type.startsWith("Read") ||
         type.startsWith("Replace") ||

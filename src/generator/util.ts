@@ -208,6 +208,7 @@ export function getSemanticMethodName(method: string): string {
     patch: "modify",
     delete: "delete",
   };
+  console.log("method: =========+> ", method);
   return httpMethodMap[method.toLowerCase()] || method.toLowerCase();
 }
 

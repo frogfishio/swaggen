@@ -7,7 +7,7 @@ import { User } from "../schema/user";
 export type ReadUsersByUserIdResponse = User;
   
 // Query parameter interfaces
-interface ReadUsersByUserIdQueryParams { include?: string[] }
+export interface ReadUsersByUserIdQueryParams { include?: string[] }
   
 export interface UsersUserIdProxy {
 	readUsersByUserId(userId: string, query: ReadUsersByUserIdQueryParams): Promise<ReadUsersByUserIdResponse>;

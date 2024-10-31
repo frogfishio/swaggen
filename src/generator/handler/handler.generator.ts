@@ -18,7 +18,8 @@ import {
   extractEntityName,
   getTemplatePath,
   extractClassNameFromEndpoint,
-  getSemanticMethodName
+  getSemanticMethodName,
+  capitalizeFirstLetter
 } from "../util";
 
 // Replace the local `toPascalCase` and `extractRefName` with imports from `handlers-util.ts`
@@ -239,10 +240,15 @@ export class HandlerGenerator {
     const pathParams = (methodSpec.parameters || [])
       .filter((param) => "in" in param && param.in === "path")
       .map((param) => (param as OpenAPIV3.ParameterObject).name);
-  
+
+    // Extract query parameters for naming
+    const queryParams = (methodSpec.parameters || [])
+      .filter((param) => "in" in param && param.in === "query")
+      .map((param) => (param as OpenAPIV3.ParameterObject).name);
+
     // Validation code for path parameters
     const validationCode = this.generateValidationCode(methodSpec.parameters);
-  
+
     // Determine request body type
     let requestBodyType = "any";
     if (methodSpec.requestBody) {
@@ -257,58 +263,60 @@ export class HandlerGenerator {
         }
       }
     }
-  
+
     // Generate proxy method signature as a comment
     const proxyMethodSignature = this.generateProxyMethodSignature(
       method,
       className,
       pathParams,
+      queryParams, // Pass queryParams here
       usedTypes
     );
-  
+
     // Track request type if it's not "any" or already in schemaTypes
     if (requestBodyType !== "any" && !schemaTypes.has(requestBodyType)) {
       usedTypes.add(requestBodyType);
     }
-  
+
     // Construct the method implementation
     const methodName = getMethodName(method, className);
     let methodImpl = `  public async ${methodName}(req: Request): Promise<Response> {\n`;
-  
+
     // Add proxy method signature as a comment
     methodImpl += `    // Proxy method signature: ${proxyMethodSignature}\n`;
-  
+
     if (validationCode.trim()) {
       methodImpl += `${validationCode}`;
     }
-  
+
     // Extract path parameters from the request
     const pathParamAssignments = pathParams
       .map((param) => `const ${param} = req.path.split("/").pop() || "";`)
       .join("\n");
-  
+
     if (pathParamAssignments) {
       methodImpl += `    ${pathParamAssignments}\n`;
     }
-  
+
     // Construct the proxy method call with parameters
     const proxyParams = [
       ...pathParams,
+      queryParams.length > 0 ? "req.query" : "",
       requestBodyType !== "any" ? "req.body" : "",
     ]
       .filter((param) => param)
       .join(", ");
-  
+
     methodImpl += `    const result = await this.proxy.${methodName}(${proxyParams});\n`;
     methodImpl += `    // TODO: Implement ${method.toUpperCase()} logic\n`;
-  
+
     if (methodSpec.requestBody && requestBodyType !== "any") {
       methodImpl += `    // If request body type is needed: (req.body as ${requestBodyType})\n`;
     }
-  
+
     methodImpl += `    return new Response(200, { "Content-Type": "application/json" }, { message: "${method.toUpperCase()} method called" });\n`;
     methodImpl += `  }`;
-  
+
     return methodImpl;
   }
 
@@ -316,19 +324,20 @@ export class HandlerGenerator {
     method: string,
     endpoint: string,
     pathParams: string[], // Add pathParams parameter
+    queryParams: string[], // Add queryParams parameter
     usedTypes: Set<string>
   ): string {
     const entityName = extractEntityName(endpoint);
-    const methodName = getMethodName(method, entityName);
-    const requestType = this.getRequestTypeName(getSemanticMethodName(method), endpoint);
-    const responseType = this.getResponseTypeName(getSemanticMethodName(method), endpoint);
-  
+    const methodName = getMethodName(method, endpoint);
+    const requestType = queryParams.length > 0 ? `${capitalizeFirstLetter(methodName)}QueryParams` : "void";
+    const responseType = capitalizeFirstLetter(methodName + 'Response');
+
     // Track request and response types
     if (requestType !== "void") {
       usedTypes.add(requestType);
     }
     usedTypes.add(responseType);
-  
+
     // Format the method signature
     return `${methodName}(request: ${requestType}): Promise<${responseType}>;`;
   }

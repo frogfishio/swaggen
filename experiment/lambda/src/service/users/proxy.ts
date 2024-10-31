@@ -11,7 +11,7 @@ export type CreateUsersRequest = User;
 export type CreateUsersResponse = User;
   
 // Query parameter interfaces
-interface ReadUsersQueryParams { limit?: number; status?: string; createdBefore?: string; metadata?: object }
+export interface ReadUsersQueryParams { limit?: number; status?: string; createdBefore?: string; metadata?: object }
   
 export interface UsersProxy {
 	readUsers(query: ReadUsersQueryParams): Promise<ReadUsersResponse>;

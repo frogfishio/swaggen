@@ -138,7 +138,7 @@ export class HandlerProxyGenerator {
         let queryType = "void"; // Default to void if no query params
         if (queryParams.length > 0) {
           const interfaceName = `${toPascalCase(getMethodName(method, endpoint))}QueryParams`;
-          const queryParamsInterface = `interface ${interfaceName} { ${queryParams.join("; ")} }`;
+          const queryParamsInterface = `export interface ${interfaceName} { ${queryParams.join("; ")} }`;
           queryInterfaces.push(queryParamsInterface);
           queryType = interfaceName; // Use the interface as the query type
         }

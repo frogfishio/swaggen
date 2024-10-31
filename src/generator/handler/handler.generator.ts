@@ -56,7 +56,7 @@ export class HandlerGenerator {
       this.generateMethodImplementation(
         method.toLowerCase(),
         methods[method],
-        className,
+        endpoint,
         usedTypes, // Pass the usedTypes set here
         schemaTypes // Pass the schemaTypes set here
       )
@@ -232,7 +232,7 @@ export class HandlerGenerator {
   private generateMethodImplementation(
     method: string,
     methodSpec: OpenAPIV3.OperationObject,
-    className: string,
+    endpoint: string,
     usedTypes: Set<string>,
     schemaTypes: Set<string>
   ): string {
@@ -267,8 +267,7 @@ export class HandlerGenerator {
     // Generate proxy method signature as a comment
     const proxyMethodSignature = this.generateProxyMethodSignature(
       method,
-      className,
-      pathParams,
+      endpoint,
       queryParams, // Pass queryParams here
       usedTypes
     );
@@ -279,7 +278,7 @@ export class HandlerGenerator {
     }
 
     // Construct the method implementation
-    const methodName = getMethodName(method, className);
+    const methodName = getMethodName(method, endpoint);
     let methodImpl = `  public async ${methodName}(req: Request): Promise<Response> {\n`;
 
     // Add proxy method signature as a comment
@@ -323,12 +322,13 @@ export class HandlerGenerator {
   private generateProxyMethodSignature(
     method: string,
     endpoint: string,
-    pathParams: string[], // Add pathParams parameter
     queryParams: string[], // Add queryParams parameter
     usedTypes: Set<string>
   ): string {
     const entityName = extractEntityName(endpoint);
     const methodName = getMethodName(method, endpoint);
+    //@+++
+    console.log(`QQQ Generating method: ${methodName} [${method}] Endpoint: ${endpoint} QuertParams: ${queryParams}`);
     const requestType = queryParams.length > 0 ? `${capitalizeFirstLetter(methodName)}QueryParams` : "void";
     const responseType = capitalizeFirstLetter(methodName + 'Response');
 

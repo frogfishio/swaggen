@@ -4,21 +4,21 @@
 import { User } from "../schema/user";
   
 // Auto-generated interfaces
-export interface CreateExtendedRequest {
+export interface CreateUsersExtendedRequest {
   source?: string;
   isActive?: boolean;
   user?: User;
 }
 
-export interface CreateExtendedResponse {
+export interface CreateUsersExtendedResponse {
   user?: User;
   source?: string;
   isActive?: boolean;
 }
   
 // Query parameter interfaces
-interface PostExtendedRequestBody { source?: string; isActive?: boolean; user?: User; }
+interface CreateUsersExtendedRequestBody { source?: string; isActive?: boolean; user?: User; }
   
 export interface UsersExtendedProxy {
-	createUsersExtended(data: PostExtendedRequestBody): Promise<CreateExtendedResponse>;
+	createUsersExtended(data: CreateUsersExtendedRequestBody): Promise<CreateUsersExtendedResponse>;
 }

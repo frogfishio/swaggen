@@ -4,11 +4,11 @@
 import { User } from "../schema/user";
   
 // Auto-generated interfaces
-export type ReadUserResponse = User;
+export type ReadUsersByUserIdResponse = User;
   
 // Query parameter interfaces
-interface ReadUserQueryParams { include?: string[] }
+interface ReadUsersByUserIdQueryParams { include?: string[] }
   
 export interface UsersUserIdProxy {
-	readUsersByUserId(userId: string, query: ReadUserQueryParams): Promise<ReadUserResponse>;
+	readUsersByUserId(userId: string, query: ReadUsersByUserIdQueryParams): Promise<ReadUsersByUserIdResponse>;
 }

@@ -11,7 +11,7 @@ import {
   extractRefType,
   getResponseTypeName,
   extractClassNameFromEndpoint,
-  getSemanticMethodName // Import the new helper function
+  getSemanticMethodName // Import the new helper function,
 } from "../util";
 import { OpenAPIV3 } from "openapi-types";
 
@@ -22,7 +22,8 @@ export class HandlerProxyGenerator {
     const normalizedEndpoint = normalizeEndpoint(endpoint);
     const className = toPascalCase(extractClassNameFromEndpoint(endpoint)) + "Proxy";
 
-    console.log(`XXX Generating proxy for ${endpoint} -> ${className}...`);
+    // const mtn = getMethodName("get", endpoint);
+    // console.log(`XXX Generating proxy for ${endpoint} -> ${className} [${mtn}]`);
 
     // Create directory for the proxy file: <out>/<normalizedEndpoint>
     const targetDir = path.join(this.outputPath, normalizedEndpoint);
@@ -33,6 +34,9 @@ export class HandlerProxyGenerator {
       endpoint,
       methods
     ); // Fetch the correct types
+
+    //+++
+    console.log(`YYY Generating proxy for ${imports} -> ${interfaces}...`);
 
     const { proxyMethods, usedTypes, queryInterfaces } =
       this.generateProxyMethods(methods, endpoint); // Generate proxy methods, collect used types, and query parameter interfaces
@@ -61,7 +65,6 @@ export class HandlerProxyGenerator {
     queryInterfaces: string[];
   } {
     const entityName = extractEntityName(endpoint);
-    const pascalCaseEntityName = toPascalCase(entityName);
     const usedTypes = new Set<string>(); // To collect used types
     const queryInterfaces: string[] = []; // To collect query parameter interfaces
 
@@ -134,7 +137,7 @@ export class HandlerProxyGenerator {
         // Generate a query params interface if we have query parameters
         let queryType = "void"; // Default to void if no query params
         if (queryParams.length > 0) {
-          const interfaceName = `${toPascalCase(getSemanticMethodName(method))}${pascalCaseEntityName}QueryParams`;
+          const interfaceName = `${toPascalCase(getMethodName(method, endpoint))}QueryParams`;
           const queryParamsInterface = `interface ${interfaceName} { ${queryParams.join("; ")} }`;
           queryInterfaces.push(queryParamsInterface);
           queryType = interfaceName; // Use the interface as the query type
@@ -154,7 +157,7 @@ export class HandlerProxyGenerator {
               dataType = extractRefType(content.schema.$ref); // Reference type from $ref
               usedTypes.add(dataType);
             } else {
-              dataType = `${toPascalCase(method)}${pascalCaseEntityName}RequestBody`;
+              dataType = `${toPascalCase(getMethodName(method, endpoint))}RequestBody`;
               const bodyInterface = `interface ${dataType} ${resolveType(content.schema as OpenAPIV3.SchemaObject, usedTypes)}`;
               queryInterfaces.push(bodyInterface);
             }
@@ -162,9 +165,9 @@ export class HandlerProxyGenerator {
         }
 
         const methodName = getMethodName(method, endpoint);
+        const responseType = toPascalCase(methodName + 'Response');
 
-        console.log(`XXX Generating method: ${methodName} [${method}] Endpoint: ${endpoint}`);
-        const responseType = getResponseTypeName(method, pascalCaseEntityName);
+        console.log(`XXX Generating method: ${methodName} [${method}] Endpoint: ${endpoint} Response type: ${responseType} Entity: ${entityName}`);
 
         // Add response type to the usedTypes set
         usedTypes.add(responseType);

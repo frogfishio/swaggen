@@ -5,6 +5,8 @@ import {
   resolveType,
   generateBaseInterfaceName, // Reuse from util.ts
   extractEntityName, // Reuse from util.ts
+  getMethodName,
+  capitalizeFirstLetter
 } from "../util";
 
 /**
@@ -26,12 +28,10 @@ export function generateInterfaceDefinitions(
 
   // Iterate over each method (GET, POST, PUT, etc.)
   for (const [method, operation] of Object.entries(methods)) {
-    // Use the reusable function to generate the base interface name
-    const baseName = generateBaseInterfaceName(
-      operation.operationId,
-      method,
-      entityName
-    );
+    const en = getMethodName(method, endpoint);
+    const baseName = capitalizeFirstLetter(en);
+    
+    console.log(`XXX Base name ${entityName} -> ${baseName}...`);
 
     // Generate interfaces for request body
     if (operation.requestBody) {

@@ -4,16 +4,16 @@
 import { User } from "../schema/user";
   
 // Auto-generated interfaces
-export type ReadUserResponse = User[];
+export type ReadUsersResponse = User[];
 
-export type CreateUserRequest = User;
+export type CreateUsersRequest = User;
 
-export type CreateUserResponse = User;
+export type CreateUsersResponse = User;
   
 // Query parameter interfaces
-interface ReadUserQueryParams { limit?: number; status?: string; createdBefore?: string; metadata?: object }
+interface ReadUsersQueryParams { limit?: number; status?: string; createdBefore?: string; metadata?: object }
   
 export interface UsersProxy {
-	readUsers(query: ReadUserQueryParams): Promise<ReadUserResponse>;
-	createUsers(data: User): Promise<CreateUserResponse>;
+	readUsers(query: ReadUsersQueryParams): Promise<ReadUsersResponse>;
+	createUsers(data: User): Promise<CreateUsersResponse>;
 }

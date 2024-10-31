@@ -248,19 +248,6 @@ export function getTemplatePath(templateFile: string): string {
   return path.join(templateRoot, templateFile);
 }
 
-/**
- * Get the mapped method name based on the HTTP method and endpoint.
- *
- * @param method - The HTTP method (e.g., "get", "post").
- * @param entityName - The base entity name derived from the endpoint.
- * @returns The correct method name for the proxy (e.g., "createUser").
- */
-export function xgetMethodName(method: string, entityName: string): string {
-  // Use the new helper function
-  const methodName = getSemanticMethodName(method);
-  return `${methodName}${toPascalCase(entityName)}`;
-}
-
 export function getMethodName(method: string, endpoint: string): string {
   // Use the new helper function
   const methodPrefix = getSemanticMethodName(method);

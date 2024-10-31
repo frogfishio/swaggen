@@ -6,7 +6,6 @@ import Ajv, { JSONSchemaType } from "ajv"; // JSON schema validation
 
 const ajv = new Ajv();
 
-
 export class SwaggenRequest {
   method: string;
   headers: Record<string, string>;

@@ -21,18 +21,21 @@ export class UsersHandler extends SwaggenHandler {
 	private proxy: UsersProxy = new UsersStub();
 
   public async readUsers(req: SwaggenRequest): Promise<SwaggenResponse> {
-    // Proxy method signature: readUsers(request: ReadUsersQueryParams): Promise<ReadUsersResponse>;
-    const result = await this.proxy.readUsers(req.query);
+    // Proxy method signature: readUsers(query: ReadUsersQueryParams): Promise<ReadUsersResponse>;
+    const query: ReadUsersQueryParams = req.getAllQueryParams() as unknown as ReadUsersQueryParams;
+
+    const result = await this.proxy.readUsers(query);
     // TODO: Implement GET logic
-    return new SwaggenResponse(200, { "Content-Type": "application/json" }, { message: "GET method called" });
+    return new SwaggenResponse(200, { "Content-Type": "application/json" }, result);
   }
 
   public async createUsers(req: SwaggenRequest): Promise<SwaggenResponse> {
-    // Proxy method signature: createUsers(request: void): Promise<CreateUsersResponse>;
-    const result = await this.proxy.createUsers(req.body);
+    // Proxy method signature: createUsers(data: User): Promise<CreateUsersResponse>;
+    const data: User = req.body as User;
+
+    const result = await this.proxy.createUsers(data);
     // TODO: Implement POST logic
-    // If request body type is needed: (req.body as User)
-    return new SwaggenResponse(200, { "Content-Type": "application/json" }, { message: "POST method called" });
+    return new SwaggenResponse(200, { "Content-Type": "application/json" }, result);
   }
 
   protected getUnauthorized(): SwaggenResponse {

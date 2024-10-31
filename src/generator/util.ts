@@ -291,19 +291,62 @@ export function ensureDirectoryExists(dir: string): void {
 
 /**
  * Generates import statements for types used in the handler.
- * 
+ *
  * @param usedTypes - Set of types used within the handler.
- * @returns Import statements for these types.
+ * @param existingImports - Existing import statements to avoid duplicates.
+ * @returns An object containing proxyImports and schemaImports.
  */
-export function generateTypeImports(usedTypes: Set<string>): string {
-  if (usedTypes.size === 0) return "";
-  const typesArray = Array.from(usedTypes).sort();
-  return `import { ${typesArray.join(", ")} } from "./proxy";`;
+export function generateTypeImports(
+  usedTypes: Set<string>,
+  existingImports: string
+): { proxyImports: string; schemaImports: string } {
+  if (usedTypes.size === 0) return { proxyImports: "", schemaImports: "" };
+
+  const proxyTypes: string[] = [];
+  const schemaTypes: string[] = [];
+
+  usedTypes.forEach((type) => {
+    const typeImportRegex = new RegExp(`\\b${type}\\b`);
+
+    // Check if the type already exists in existing imports
+    if (
+      type.startsWith("Create") ||
+      type.startsWith("Read") ||
+      type.startsWith("Replace") ||
+      type.startsWith("Modify") ||
+      type.startsWith("Delete") ||
+      type.endsWith("Response") ||
+      type.endsWith("Request") ||
+      type.endsWith("QueryParams")
+    ) {
+      // Request/response types go to proxy imports if not already present
+      if (!typeImportRegex.test(existingImports)) {
+        proxyTypes.push(type);
+      }
+    } else {
+      // Schema types go to schema imports if not already present
+      if (!typeImportRegex.test(existingImports)) {
+        schemaTypes.push(type);
+      }
+    }
+  });
+
+  const proxyImport =
+    proxyTypes.length > 0
+      ? `import { ${proxyTypes.sort().join(", ")} } from "./proxy";`
+      : "";
+
+  const schemaImportStatements = schemaTypes
+    .map((type) => `import { ${type} } from "../schema/${type.toLowerCase()}";`)
+    .join("\n");
+
+  return { proxyImports: proxyImport, schemaImports: schemaImportStatements };
 }
 
+
 /**
- * Generates schema import statements.
- * 
+ * Generates schema import statements from the schemaTypes set.
+ *
  * @param schemaTypes - Set of schema types required.
  * @returns Import statements for schemas.
  */
@@ -314,6 +357,7 @@ export function generateSchemaImports(schemaTypes: Set<string>): string {
     .map((type) => `import { ${type} } from "../schema/${type.toLowerCase()}";`)
     .join("\n");
 }
+
 
 /**
  * Generates a proxy method signature for a given method.
@@ -341,3 +385,19 @@ export function generateProxyMethodSignature(
   return `${methodName}(request: ${requestType}): Promise<${responseType}>;`;
 }
 
+/**
+ * Determines if a type is a schema type based on its naming convention.
+ *
+ * @param typeName - The name of the type.
+ * @returns True if it's a schema type, false otherwise.
+ */
+export function isSchemaType(typeName: string): boolean {
+  const proxyTypePrefixes = ["Create", "Read", "Replace", "Modify", "Delete"];
+  const isProxyType =
+    proxyTypePrefixes.some((prefix) => typeName.startsWith(prefix)) ||
+    typeName.endsWith("Response") ||
+    typeName.endsWith("Request") ||
+    typeName.endsWith("QueryParams");
+
+  return !isProxyType;
+}

@@ -3,7 +3,6 @@ import {
   extractRefName,
   isReferenceObject,
   resolveType,
-  generateBaseInterfaceName, // Reuse from util.ts
   extractEntityName, // Reuse from util.ts
   getMethodName,
   capitalizeFirstLetter
@@ -31,8 +30,6 @@ export function generateInterfaceDefinitions(
     const en = getMethodName(method, endpoint);
     const baseName = capitalizeFirstLetter(en);
     
-    console.log(`XXX Base name ${entityName} -> ${baseName}...`);
-
     // Generate interfaces for request body
     if (operation.requestBody) {
       const requestBody = operation.requestBody as OpenAPIV3.RequestBodyObject;

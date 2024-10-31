@@ -9,9 +9,7 @@ import {
   getMethodName,
   resolveType,
   extractRefType,
-  getResponseTypeName,
   extractClassNameFromEndpoint,
-  getSemanticMethodName // Import the new helper function,
 } from "../util";
 import { OpenAPIV3 } from "openapi-types";
 
@@ -21,9 +19,6 @@ export class HandlerProxyGenerator {
   public generateProxy(endpoint: string, methods: Record<string, any>): void {
     const normalizedEndpoint = normalizeEndpoint(endpoint);
     const className = toPascalCase(extractClassNameFromEndpoint(endpoint)) + "Proxy";
-
-    // const mtn = getMethodName("get", endpoint);
-    // console.log(`XXX Generating proxy for ${endpoint} -> ${className} [${mtn}]`);
 
     // Create directory for the proxy file: <out>/<normalizedEndpoint>
     const targetDir = path.join(this.outputPath, normalizedEndpoint);
@@ -166,8 +161,6 @@ export class HandlerProxyGenerator {
 
         const methodName = getMethodName(method, endpoint);
         const responseType = toPascalCase(methodName + 'Response');
-
-        console.log(`XXX Generating method: ${methodName} [${method}] Endpoint: ${endpoint} Response type: ${responseType} Entity: ${entityName}`);
 
         // Add response type to the usedTypes set
         usedTypes.add(responseType);

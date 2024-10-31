@@ -1,4 +1,0 @@
-# AWS Lambda deployment script
-# Endpoints: /users, /users/extended, /users/{userId}
-# Capabilities: log
-# You can add more details or logic for generating the deployment here.

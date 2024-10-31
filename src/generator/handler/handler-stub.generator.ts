@@ -2,14 +2,11 @@ import { generateInterfaceDefinitions } from "./handler-types.generator";
 import * as fs from "fs";
 import * as path from "path";
 import {
-  ensureOutputDirectory,
   toPascalCase,
   normalizeEndpoint,
-  extractEntityName,
   getMethodName,
   resolveType,
   extractRefType,
-  getResponseTypeName,
   ensureDirectoryExists,
   extractClassNameFromEndpoint
 } from "../util";

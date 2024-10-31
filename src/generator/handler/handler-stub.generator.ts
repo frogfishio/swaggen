@@ -14,31 +14,31 @@ import { OpenAPIV3 } from "openapi-types";
 
 export class HandlerStubGenerator {
   constructor(private outputPath: string) {}
-
+  
   public generateStub(endpoint: string, methods: Record<string, any>): void {
     const normalizedEndpoint = normalizeEndpoint(endpoint);
     const className = toPascalCase(extractClassNameFromEndpoint(endpoint)) + "Stub";
     const interfaceName = toPascalCase(extractClassNameFromEndpoint(endpoint)) + "Proxy";
-
+    
     // Create directory for the stub file: <out>/<normalizedEndpoint>
     const targetDir = path.join(this.outputPath, normalizedEndpoint);
     ensureDirectoryExists(targetDir);
-
+    
     // Generate interface imports and class stub methods
     const { imports, interfaces, typesToImport } = generateInterfaceDefinitions(
       endpoint,
       methods
     );
-
+    
     const { stubMethods, usedTypes, queryInterfaces } =
-      this.generateStubMethods(methods, endpoint);
-
+    this.generateStubMethods(methods, endpoint);
+    
     // Generate import statements for used types
     const typeImports = this.generateTypeImports(usedTypes, imports);
-
+    
     // Generate the proxy interface import statement
     const proxyImport = `import { ${interfaceName} } from "./proxy";`;
-
+    
     // Combine all parts into a stub.ts file content
     const stubContent = this.buildStubContent(
       typeImports,
@@ -49,13 +49,13 @@ export class HandlerStubGenerator {
       stubMethods,
       queryInterfaces
     );
-
+    
     // Write the stub.ts file
     const stubFilePath = path.join(targetDir, `stub.ts`);
     fs.writeFileSync(stubFilePath, stubContent, "utf8");
     console.log(`Created stub file: ${stubFilePath}`);
   }
-
+  
   private generateStubMethods(
     methods: Record<string, OpenAPIV3.OperationObject>,
     endpoint: string
@@ -68,142 +68,140 @@ export class HandlerStubGenerator {
     // const pascalCaseEntityName = toPascalCase(entityName);
     const usedTypes = new Set<string>();
     const queryInterfaces: string[] = [];
-
-    // console.log(`ZZZ Generating stub methods for ${entityName}...`);
-
+    
     const stubMethods = Object.entries(methods)
-      .map(([method, methodDef]) => {
-        const entityName = getMethodName(method, endpoint);
-        const pascalCaseEntityName = toPascalCase(entityName);
-
-        const pathParams =
-          (
-            methodDef.parameters as
-              | (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[]
-              | undefined
-          )
-            ?.filter(
-              (param): param is OpenAPIV3.ParameterObject =>
-                "in" in param && param.in === "path"
-            )
-            .map((param: OpenAPIV3.ParameterObject) => {
-              let paramType = "string";
-              if (param.schema) {
-                if ("$ref" in param.schema) {
-                  paramType = "any";
-                } else {
-                  paramType =
-                    (param.schema as OpenAPIV3.SchemaObject).type === "integer"
-                      ? "number"
-                      : (param.schema as OpenAPIV3.SchemaObject).type ||
-                        "string";
-                }
-              }
-              const paramName =
-                param.name.charAt(0).toLowerCase() + param.name.slice(1);
-              return { name: paramName, type: paramType };
-            }) || [];
-
-        const queryParams =
-          (
-            methodDef.parameters as
-              | (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[]
-              | undefined
-          )
-            ?.filter(
-              (param): param is OpenAPIV3.ParameterObject =>
-                "in" in param && param.in === "query"
-            )
-            .map((param: OpenAPIV3.ParameterObject) => {
-              let paramType = "string";
-              if (param.schema) {
-                if ("$ref" in param.schema) {
-                  paramType = "any";
-                } else if (
-                  param.schema.type === "array" &&
-                  param.schema.items
-                ) {
-                  paramType = `${(param.schema.items as OpenAPIV3.SchemaObject).type === "integer" ? "number" : (param.schema.items as OpenAPIV3.SchemaObject).type}[]`;
-                } else {
-                  paramType =
-                    param.schema.type === "integer"
-                      ? "number"
-                      : (param.schema as OpenAPIV3.SchemaObject).type ||
-                        "string";
-                }
-              }
-              const paramName = param.name;
-              return `${paramName}${param.required ? "" : "?"}: ${paramType}`;
-            }) || [];
-
-        let queryType = "void";
-        if (queryParams.length > 0) {
-          const interfaceName = `${toPascalCase(method)}${pascalCaseEntityName}QueryParams`;
-          const queryParamsInterface = `interface ${interfaceName} { ${queryParams.join("; ")} }`;
-          queryInterfaces.push(queryParamsInterface);
-          queryType = interfaceName;
-        }
-
-        let dataType = "void";
-        if (
-          ["post", "put", "patch"].includes(method.toLowerCase()) &&
-          methodDef.requestBody
-        ) {
-          const requestBody =
-            methodDef.requestBody as OpenAPIV3.RequestBodyObject;
-          const content = requestBody.content["application/json"];
-          if (content && content.schema) {
-            if ("$ref" in content.schema) {
-              dataType = extractRefType(content.schema.$ref);
-              usedTypes.add(dataType);
-            } else {
-              dataType = `${toPascalCase(method)}${pascalCaseEntityName}RequestBody`;
-              const bodyInterface = `interface ${dataType} ${resolveType(content.schema as OpenAPIV3.SchemaObject, usedTypes)}`;
-              queryInterfaces.push(bodyInterface);
-            }
+    .map(([method, methodDef]) => {
+      const entityName = getMethodName(method, endpoint);
+      const pascalCaseEntityName = toPascalCase(entityName);
+      
+      const pathParams =
+      (
+        methodDef.parameters as
+        | (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[]
+        | undefined
+      )
+      ?.filter(
+        (param): param is OpenAPIV3.ParameterObject =>
+          "in" in param && param.in === "path"
+      )
+      .map((param: OpenAPIV3.ParameterObject) => {
+        let paramType = "string";
+        if (param.schema) {
+          if ("$ref" in param.schema) {
+            paramType = "any";
+          } else {
+            paramType =
+            (param.schema as OpenAPIV3.SchemaObject).type === "integer"
+            ? "number"
+            : (param.schema as OpenAPIV3.SchemaObject).type ||
+            "string";
           }
         }
-
-        const methodName = getMethodName(method, endpoint);
-        const responseType = pascalCaseEntityName + "Response"
-
-        usedTypes.add(responseType);
-
-        const paramString = pathParams
-          .filter((param) => param.type !== "void")
-          .map((param) => `${param.name}: ${param.type}`)
-          .join(", ");
-
-        const finalParams = [
-          paramString,
-          queryType !== "void" ? `query: ${queryType}` : "",
-          dataType !== "void" ? `data: ${dataType}` : "",
-        ]
-          .filter((param) => param)
-          .join(", ");
-
-        return `
+        const paramName =
+        param.name.charAt(0).toLowerCase() + param.name.slice(1);
+        return { name: paramName, type: paramType };
+      }) || [];
+      
+      const queryParams =
+      (
+        methodDef.parameters as
+        | (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[]
+        | undefined
+      )
+      ?.filter(
+        (param): param is OpenAPIV3.ParameterObject =>
+          "in" in param && param.in === "query"
+      )
+      .map((param: OpenAPIV3.ParameterObject) => {
+        let paramType = "string";
+        if (param.schema) {
+          if ("$ref" in param.schema) {
+            paramType = "any";
+          } else if (
+            param.schema.type === "array" &&
+            param.schema.items
+          ) {
+            paramType = `${(param.schema.items as OpenAPIV3.SchemaObject).type === "integer" ? "number" : (param.schema.items as OpenAPIV3.SchemaObject).type}[]`;
+          } else {
+            paramType =
+            param.schema.type === "integer"
+            ? "number"
+            : (param.schema as OpenAPIV3.SchemaObject).type ||
+            "string";
+          }
+        }
+        const paramName = param.name;
+        return `${paramName}${param.required ? "" : "?"}: ${paramType}`;
+      }) || [];
+      
+      let queryType = "void";
+      if (queryParams.length > 0) {
+        const interfaceName = `${toPascalCase(method)}${pascalCaseEntityName}QueryParams`;
+        const queryParamsInterface = `interface ${interfaceName} { ${queryParams.join("; ")} }`;
+        queryInterfaces.push(queryParamsInterface);
+        queryType = interfaceName;
+      }
+      
+      let dataType = "void";
+      if (
+        ["post", "put", "patch"].includes(method.toLowerCase()) &&
+        methodDef.requestBody
+      ) {
+        const requestBody =
+        methodDef.requestBody as OpenAPIV3.RequestBodyObject;
+        const content = requestBody.content["application/json"];
+        if (content && content.schema) {
+          if ("$ref" in content.schema) {
+            dataType = extractRefType(content.schema.$ref);
+            usedTypes.add(dataType);
+          } else {
+            dataType = `${toPascalCase(method)}${pascalCaseEntityName}RequestBody`;
+            const bodyInterface = `interface ${dataType} ${resolveType(content.schema as OpenAPIV3.SchemaObject, usedTypes)}`;
+            queryInterfaces.push(bodyInterface);
+          }
+        }
+      }
+      
+      const methodName = getMethodName(method, endpoint);
+      const responseType = pascalCaseEntityName + "Response"
+      
+      usedTypes.add(responseType);
+      
+      const paramString = pathParams
+      .filter((param) => param.type !== "void")
+      .map((param) => `${param.name}: ${param.type}`)
+      .join(", ");
+      
+      const finalParams = [
+        paramString,
+        queryType !== "void" ? `query: ${queryType}` : "",
+        dataType !== "void" ? `data: ${dataType}` : "",
+      ]
+      .filter((param) => param)
+      .join(", ");
+      
+      return `
     async ${methodName}(${finalParams}): Promise<${responseType}> {
       return Promise.reject("Not implemented");
     }`;
-      })
-      .join("\n");
-
+    })
+    .join("\n");
+    
     return { stubMethods, usedTypes, queryInterfaces };
   }
-
+  
   private generateTypeImports(
     usedTypes: Set<string>,
     existingImports: string
   ): string {
     if (usedTypes.size === 0) return "";
-
+    
     const proxyTypes: string[] = [];
     const schemaImports: string[] = [];
-
+    
     usedTypes.forEach((type) => {
       const typeImportRegex = new RegExp(`\\b${type}\\b`);
-
+      
       // Check if the type already exists in existing imports
       if (
         type.startsWith("Create") ||
@@ -225,16 +223,16 @@ export class HandlerStubGenerator {
         }
       }
     });
-
+    
     const proxyImport =
-      proxyTypes.length > 0
-        ? `import { ${proxyTypes.sort().join(", ")} } from "./proxy";`
-        : "";
+    proxyTypes.length > 0
+    ? `import { ${proxyTypes.sort().join(", ")} } from "./proxy";`
+    : "";
     const schemaImportStatements = schemaImports.sort().join("\n");
-
+    
     return `${proxyImport}\n${schemaImportStatements}`;
   }
-
+  
   private buildStubContent(
     typeImports: string,
     proxyImport: string,
@@ -246,15 +244,15 @@ export class HandlerStubGenerator {
   ): string {
     // Combine all necessary imports, ensuring unique entries
     const combinedImports = [typeImports, proxyImport, handlerImports]
-      .filter(Boolean)
-      .join("\n");
-
+    .filter(Boolean)
+    .join("\n");
+    
     return `
 // Auto-generated stub class for ${className}
-${combinedImports}
+    ${combinedImports}
   
 // Query parameter interfaces
-${queryInterfaces.join("\n")}
+    ${queryInterfaces.join("\n")}
   
 export class ${className} implements ${interfaceName} {
   ${methods}

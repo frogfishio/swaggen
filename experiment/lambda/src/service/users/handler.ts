@@ -20,14 +20,14 @@ export class UsersHandler extends SwaggenHandler {
 
 	private proxy: UsersProxy = new UsersStub();
 
-  public async readUsers(req: Request): Promise<SwaggenResponse> {
+  public async readUsers(req: SwaggenRequest): Promise<SwaggenResponse> {
     // Proxy method signature: readUsers(request: ReadUsersQueryParams): Promise<ReadUsersResponse>;
     const result = await this.proxy.readUsers(req.query);
     // TODO: Implement GET logic
     return new SwaggenResponse(200, { "Content-Type": "application/json" }, { message: "GET method called" });
   }
 
-  public async createUsers(req: Request): Promise<SwaggenResponse> {
+  public async createUsers(req: SwaggenRequest): Promise<SwaggenResponse> {
     // Proxy method signature: createUsers(request: void): Promise<CreateUsersResponse>;
     const result = await this.proxy.createUsers(req.body);
     // TODO: Implement POST logic

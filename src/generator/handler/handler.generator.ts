@@ -17,9 +17,11 @@ import {
   getMethodName,
   extractEntityName,
   getTemplatePath,
-  extractClassNameFromEndpoint,
+  extractClassNameFromEndpoint, // Import the function
   getSemanticMethodName,
-  capitalizeFirstLetter
+  capitalizeFirstLetter,
+  generateTypeImports,
+  generateSchemaImports
 } from "../util";
 
 // Replace the local `toPascalCase` and `extractRefName` with imports from `handlers-util.ts`
@@ -119,10 +121,10 @@ export class HandlerGenerator {
     const stubImport = `import { ${className}Stub } from "./stub";`;
 
     // Generate imports for the types used in the method signatures
-    const typeImports = this.generateTypeImports(usedTypes);
+    const typeImports = generateTypeImports(usedTypes);
 
     // Collect schema imports separately from the given imports
-    const schemaImports = this.generateSchemaImports(schemaTypes);
+    const schemaImports = generateSchemaImports(schemaTypes);
 
     // Start building the content
     let content = "";
@@ -169,37 +171,37 @@ export class HandlerGenerator {
     return content;
   }
 
-  /**
-   * Generates import statements for the used types in the handler from the proxy.
-   *
-   * @param usedTypes - A set of types used in the handler.
-   * @returns A string representing the import statements.
-   */
-  private generateTypeImports(usedTypes: Set<string>): string {
-    if (usedTypes.size === 0) return "";
+  // /**
+  //  * Generates import statements for the used types in the handler from the proxy.
+  //  *
+  //  * @param usedTypes - A set of types used in the handler.
+  //  * @returns A string representing the import statements.
+  //  */
+  // private generateTypeImports(usedTypes: Set<string>): string {
+  //   if (usedTypes.size === 0) return "";
 
-    const typesArray = Array.from(usedTypes).sort(); // Sort for consistent order
-    return `import { ${typesArray.join(", ")} } from "./proxy";`;
-  }
+  //   const typesArray = Array.from(usedTypes).sort(); // Sort for consistent order
+  //   return `import { ${typesArray.join(", ")} } from "./proxy";`;
+  // }
 
-  /**
-   * Generates import statements for schemas from the correct location.
-   *
-   * @param imports - The existing imports for types (often from the proxy).
-   * @returns The updated import statements that correctly reference schemas from "../schema/<file>".
-   */
-  private generateSchemaImports(schemaTypes: Set<string>): string {
-    if (schemaTypes.size === 0) return "";
+  // /**
+  //  * Generates import statements for schemas from the correct location.
+  //  *
+  //  * @param imports - The existing imports for types (often from the proxy).
+  //  * @returns The updated import statements that correctly reference schemas from "../schema/<file>".
+  //  */
+  // private generateSchemaImports(schemaTypes: Set<string>): string {
+  //   if (schemaTypes.size === 0) return "";
 
-    const schemaImportLines: string[] = [];
-    schemaTypes.forEach((type) => {
-      // Assuming each schema type is in a separate file named after the type
-      const schemaImport = `import { ${type} } from "../schema/${type.toLowerCase()}";`;
-      schemaImportLines.push(schemaImport);
-    });
+  //   const schemaImportLines: string[] = [];
+  //   schemaTypes.forEach((type) => {
+  //     // Assuming each schema type is in a separate file named after the type
+  //     const schemaImport = `import { ${type} } from "../schema/${type.toLowerCase()}";`;
+  //     schemaImportLines.push(schemaImport);
+  //   });
 
-    return schemaImportLines.join("\n");
-  }
+  //   return schemaImportLines.join("\n");
+  // }
 
   /**
    * Generates handler.base.ts with predefined content.
@@ -218,16 +220,16 @@ export class HandlerGenerator {
     console.log(`Created base handler file: ${filePath}`);
   }
 
-  /**
-   * Ensure a directory exists, and if not, create it.
-   *
-   * @param dirPath - Path to the directory.
-   */
-  private ensureDirectoryExists(dirPath: string): void {
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
-  }
+  // /**
+  //  * Ensure a directory exists, and if not, create it.
+  //  *
+  //  * @param dirPath - Path to the directory.
+  //  */
+  // private ensureDirectoryExists(dirPath: string): void {
+  //   if (!fs.existsSync(dirPath)) {
+  //     fs.mkdirSync(dirPath, { recursive: true });
+  //   }
+  // }
 
   private generateMethodImplementation(
     method: string,
@@ -279,7 +281,7 @@ export class HandlerGenerator {
 
     // Construct the method implementation
     const methodName = getMethodName(method, endpoint);
-    let methodImpl = `  public async ${methodName}(req: Request): Promise<SwaggenResponse> {\n`;
+    let methodImpl = `  public async ${methodName}(req: SwaggenRequest): Promise<SwaggenResponse> {\n`;
 
     // Add proxy method signature as a comment
     methodImpl += `    // Proxy method signature: ${proxyMethodSignature}\n`;
@@ -340,34 +342,6 @@ export class HandlerGenerator {
 
     // Format the method signature
     return `${methodName}(request: ${requestType}): Promise<${responseType}>;`;
-  }
-
-  /**
-   * Get the correct request type name (following handler-types.generator.ts logic).
-   *
-   * @param method - The HTTP method (e.g., "post", "get").
-   * @param endpoint - The API endpoint (e.g., "/users").
-   * @returns The correct request type name (e.g., "PostUserRequest").
-   */
-  private getRequestTypeName(method: string, endpoint: string): string {
-    const entityName = extractEntityName(endpoint); // Extract singular entity name from endpoint
-    const methodsWithoutBody = ["get", "delete", "head", "options"];
-    if (methodsWithoutBody.includes(method.toLowerCase())) {
-      return "void"; // No request body for these methods
-    }
-    return `${toPascalCase(method)}${toPascalCase(entityName)}Request`;
-  }
-
-  /**
-   * Get the correct response type name (following handler-types.generator.ts logic).
-   *
-   * @param method - The HTTP method (e.g., "post", "get").
-   * @param endpoint - The API endpoint (e.g., "/users").
-   * @returns The correct response type name (e.g., "PostUserResponse").
-   */
-  private getResponseTypeName(method: string, endpoint: string): string {
-    const entityName = extractEntityName(endpoint); // Extract singular entity name from endpoint
-    return `${toPascalCase(method)}${toPascalCase(entityName)}Response`;
   }
 
   /**

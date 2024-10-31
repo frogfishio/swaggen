@@ -288,3 +288,56 @@ export function getResponseTypeName(
 export function ensureDirectoryExists(dir: string): void {
   ensureOutputDirectory(dir);
 }
+
+/**
+ * Generates import statements for types used in the handler.
+ * 
+ * @param usedTypes - Set of types used within the handler.
+ * @returns Import statements for these types.
+ */
+export function generateTypeImports(usedTypes: Set<string>): string {
+  if (usedTypes.size === 0) return "";
+  const typesArray = Array.from(usedTypes).sort();
+  return `import { ${typesArray.join(", ")} } from "./proxy";`;
+}
+
+/**
+ * Generates schema import statements.
+ * 
+ * @param schemaTypes - Set of schema types required.
+ * @returns Import statements for schemas.
+ */
+export function generateSchemaImports(schemaTypes: Set<string>): string {
+  if (schemaTypes.size === 0) return "";
+
+  return Array.from(schemaTypes)
+    .map((type) => `import { ${type} } from "../schema/${type.toLowerCase()}";`)
+    .join("\n");
+}
+
+/**
+ * Generates a proxy method signature for a given method.
+ * 
+ * @param method - The HTTP method (e.g., "get").
+ * @param endpoint - The API endpoint (e.g., "/users/{userId}").
+ * @param queryParams - List of query parameters.
+ * @param usedTypes - Set to collect used types.
+ * @returns The generated proxy method signature.
+ */
+export function generateProxyMethodSignature(
+  method: string,
+  endpoint: string,
+  queryParams: string[],
+  usedTypes: Set<string>
+): string {
+  const entityName = extractEntityName(endpoint);
+  const methodName = getMethodName(method, endpoint);
+  const requestType = queryParams.length > 0 ? `${capitalizeFirstLetter(methodName)}QueryParams` : "void";
+  const responseType = `${capitalizeFirstLetter(methodName)}Response`;
+
+  if (requestType !== "void") usedTypes.add(requestType);
+  usedTypes.add(responseType);
+
+  return `${methodName}(request: ${requestType}): Promise<${responseType}>;`;
+}
+

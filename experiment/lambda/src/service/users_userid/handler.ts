@@ -17,7 +17,7 @@ export class UsersUserIdHandler extends SwaggenHandler {
 
 	private proxy: UsersUserIdProxy = new UsersUserIdStub();
 
-  public async readUsersByUserId(req: Request): Promise<SwaggenResponse> {
+  public async readUsersByUserId(req: SwaggenRequest): Promise<SwaggenResponse> {
     // Proxy method signature: readUsersByUserId(request: ReadUsersByUserIdQueryParams): Promise<ReadUsersByUserIdResponse>;
     const userId = req.path.split("/").pop() || ""; // Fallback to empty string if undefined
     if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(userId)) {

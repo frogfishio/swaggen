@@ -17,7 +17,7 @@ export class UsersExtendedHandler extends SwaggenHandler {
 
 	private proxy: UsersExtendedProxy = new UsersExtendedStub();
 
-  public async createUsersExtended(req: Request): Promise<SwaggenResponse> {
+  public async createUsersExtended(req: SwaggenRequest): Promise<SwaggenResponse> {
     // Proxy method signature: createUsersExtended(request: void): Promise<CreateUsersExtendedResponse>;
     const result = await this.proxy.createUsersExtended();
     // TODO: Implement POST logic

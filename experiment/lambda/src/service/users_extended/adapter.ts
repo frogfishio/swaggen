@@ -2,7 +2,7 @@
 // Lambda Handler for UsersExtendedHandler
 
 import { UsersExtendedHandler } from "./handler";
-import { Request, Response } from "./handler.base";
+import { SwaggenRequest, SwaggenResponse } from "./swaggen";
 import { LambdaCapabilityFactory } from "@frogfish/swaggen-lambda"; // Import Lambda capability factory
 
 let capabilitiesInstance: Promise<any> | null = null;
@@ -67,7 +67,7 @@ export async function handler(event: any, context: any): Promise<any> {
     }
 
     // Create an instance of your custom Request class
-    const internalReq = new Request(
+    const internalReq = new SwaggenRequest(
       event.httpMethod,
       event.headers,
       event.body ? JSON.parse(event.body) : undefined,
@@ -76,7 +76,7 @@ export async function handler(event: any, context: any): Promise<any> {
 
     // Invoke the corresponding method on the handler instance
     // @ts-ignore indexing suppression as the workaround is not pragmatic
-    const handlerResponse: Response = await handler[methodName](internalReq);
+    const handlerResponse: SwaggenResponse = await handler[methodName](internalReq);
 
     // Return the response in AWS Lambda format
     return {

@@ -11,6 +11,7 @@ import {
   extractRefType,
   getResponseTypeName,
   ensureDirectoryExists,
+  extractClassNameFromEndpoint
 } from "../util";
 import { OpenAPIV3 } from "openapi-types";
 
@@ -19,8 +20,8 @@ export class HandlerStubGenerator {
 
   public generateStub(endpoint: string, methods: Record<string, any>): void {
     const normalizedEndpoint = normalizeEndpoint(endpoint);
-    const className = toPascalCase(normalizedEndpoint) + "Stub";
-    const interfaceName = toPascalCase(normalizedEndpoint) + "Proxy";
+    const className = toPascalCase(extractClassNameFromEndpoint(endpoint)) + "Stub";
+    const interfaceName = toPascalCase(extractClassNameFromEndpoint(endpoint)) + "Proxy";
 
     // Create directory for the stub file: <out>/<normalizedEndpoint>
     const targetDir = path.join(this.outputPath, normalizedEndpoint);
@@ -203,10 +204,16 @@ export class HandlerStubGenerator {
 
       // Check if the type already exists in existing imports
       if (
-        type.startsWith("Post") ||
-        type.startsWith("Get") ||
-        type.startsWith("Put") ||
-        type.startsWith("Patch")
+        // type.startsWith("Post") ||
+        // type.startsWith("Get") ||
+        // type.startsWith("Put") ||
+        // type.startsWith("Patch")
+
+        type.startsWith("Create") ||
+        type.startsWith("Read") ||
+        type.startsWith("Replace") ||
+        type.startsWith("Modify") ||
+        type.startsWith("Delete")
       ) {
         // Request/response types go to proxy imports if not already present
         if (!typeImportRegex.test(existingImports)) {
@@ -246,15 +253,15 @@ export class HandlerStubGenerator {
       .join("\n");
 
     return `
-  // Auto-generated stub class for ${className}
-  ${combinedImports}
+// Auto-generated stub class for ${className}
+${combinedImports}
   
-  // Query parameter interfaces
-  ${queryInterfaces.join("\n")}
+// Query parameter interfaces
+${queryInterfaces.join("\n")}
   
-  export class ${className} implements ${interfaceName} {
-    ${methods}
-  }
-      `;
+export class ${className} implements ${interfaceName} {
+  ${methods}
+}
+`;
   }
 }

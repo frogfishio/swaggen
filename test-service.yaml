@@ -1,9 +1,0 @@
-service:
-  user:
-    spec: test.yaml # swagger
-    capabilities:
-      - log
-      - k2db:
-        name: testdb # maybe it should be URL
-      - k2rbac:
-        context: app_name

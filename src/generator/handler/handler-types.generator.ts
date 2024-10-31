@@ -1,6 +1,5 @@
 import { OpenAPIV3 } from "openapi-types";
 import {
-  toPascalCase,
   extractRefName,
   isReferenceObject,
   resolveType,
@@ -111,6 +110,7 @@ export function generateInterface(
         return `  ${propName}${optional ? "?" : ""}: ${tsType};`;
       })
       .join("\n");
+
     return `export interface ${interfaceName} {\n${properties}\n}`;
   } else if (schema.type === "array" && schema.items) {
     const itemType = resolveType(schema.items, referencedTypes);

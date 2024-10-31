@@ -1,0 +1,48 @@
+swaggen:
+  spec: test.yaml
+  dest: ./src/gen # output directory
+  init:
+    SwaggenCore: @frogfish/swaggen-core # or path to the file
+    SwaggenK2DB: @frogfish/swaggen-k2db # or path to the file
+    SwaggenRBAC: @frogfish/swaggen-k2rbac # or path to the file
+    MyCustomLoader: ./my-custom-loader.js 
+  capabilities:
+    - log
+    - k2db:
+      options:
+        name: testdb
+        host: ${DB_HOST} # ${<variable_name>} will pull it from the environment
+    - k2rbac:
+      options:
+        context: app_name
+        roles:
+          admin:
+            - member
+            - admin
+          member:
+            - member
+        default_role: member
+        users:
+          - name: Default Admin
+            roles:
+              - admin
+            auth:
+              type: password
+              username: admin
+              password: admin
+          - name: Default Member
+            roles:
+              - member
+            auth:
+              type: password
+              username: member
+              password: member
+    - custom_capability
+  generate:
+    adapter: lambda # lambda | cloudflare | express
+    proxy: # without it, no proxy will be generated
+      stub: true # or path where the stub is located
+    test: true # or path where the test is located. Without it, no test will be generated
+    deploy: # without it, no deploy will be generated
+      method: terraform # terraform | ansible
+

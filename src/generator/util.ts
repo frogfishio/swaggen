@@ -12,7 +12,9 @@ import pluralize from "pluralize"; // Ensure this is installed via npm
 export function toPascalCase(str: string): string {
   return str
     .replace(/(^\w|_\w)/g, (match) => match.replace("_", "").toUpperCase())
-    .replace(/\s+/g, "");
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, "")
+    .replace(/(^\w|_\w)/g, (match) => match.toUpperCase());
 }
 
 /**
@@ -48,6 +50,23 @@ export function extractEntityName(endpoint: string): string {
   const singularResource = pluralize.singular(resource);
 
   return toPascalCase(singularResource);
+}
+
+/**
+ * Extracts the class name from an endpoint.
+ *
+ * @param endpoint - The API endpoint (e.g., "/users/{userId}").
+ * @returns The extracted class name in PascalCase (e.g., "UsersUserId").
+ */
+export function extractClassNameFromEndpoint(endpoint: string): string {
+  // Split the endpoint by '/' and filter out empty parts
+  const parts = endpoint
+    .split("/")
+    .filter((part) => part)
+    .map((part) => part.replace(/[{}]/g, "")); // Remove curly braces
+
+  // Convert each part to PascalCase and join them
+  return parts.map(toPascalCase).join("");
 }
 
 /**
@@ -169,10 +188,27 @@ export function generateBaseInterfaceName(
   method: string,
   entityName: string
 ): string {
-  const methodCapitalized = capitalizeFirstLetter(method.toLowerCase());
+  const methodCapitalized = capitalizeFirstLetter(getSemanticMethodName(method.toLowerCase()));
   return operationId
     ? toPascalCase(operationId)
     : `${methodCapitalized}${entityName}`;
+}
+
+/**
+ * Converts an HTTP verb to its semantic meaning.
+ *
+ * @param method - The HTTP method (e.g., "post", "get").
+ * @returns The semantic meaning of the HTTP method (e.g., "create", "read").
+ */
+export function getSemanticMethodName(method: string): string {
+  const httpMethodMap: Record<string, string> = {
+    post: "create",
+    get: "read",
+    put: "replace",
+    patch: "modify",
+    delete: "delete",
+  };
+  return httpMethodMap[method.toLowerCase()] || method.toLowerCase();
 }
 
 /**
@@ -189,20 +225,10 @@ export function generateProxyMethods(
   // Normalize the endpoint for cleaner method and type names
   const normalizedEndpoint = normalizeEndpoint(endpoint);
 
-  // Define a map for HTTP methods to meaningful method names
-  const httpMethodMap: Record<string, string> = {
-    post: "create",
-    get: "read",
-    put: "replace",
-    patch: "modify",
-    delete: "delete",
-  };
-
   return Object.keys(methods)
     .map((method) => {
-      // Use the mapped method name, or default to the HTTP method (lowercased)
-      const methodName =
-        httpMethodMap[method.toLowerCase()] || method.toLowerCase();
+      // Use the new helper function
+      const methodName = getSemanticMethodName(method);
       const pascalCaseEndpoint = toPascalCase(normalizedEndpoint);
       const methodSignature = `${methodName}${pascalCaseEndpoint}`;
 
@@ -230,37 +256,20 @@ export function getTemplatePath(templateFile: string): string {
  * @returns The correct method name for the proxy (e.g., "createUser").
  */
 export function xgetMethodName(method: string, entityName: string): string {
-  const httpMethodMap: Record<string, string> = {
-    post: "create",
-    get: "read",
-    put: "replace",
-    patch: "modify",
-    delete: "delete",
-  };
-  const methodName =
-    httpMethodMap[method.toLowerCase()] || method.toLowerCase();
+  // Use the new helper function
+  const methodName = getSemanticMethodName(method);
   return `${methodName}${toPascalCase(entityName)}`;
 }
 
 export function getMethodName(method: string, endpoint: string): string {
-  const httpMethodMap: Record<string, string> = {
-    post: "create",
-    get: "read",
-    put: "replace",
-    patch: "modify",
-    delete: "delete",
-  };
+  // Use the new helper function
+  const methodPrefix = getSemanticMethodName(method);
 
-  // Map HTTP method to meaningful prefix (e.g., "get" -> "read")
-  const methodPrefix =
-    httpMethodMap[method.toLowerCase()] || method.toLowerCase();
-
-  // Extract entity name from the endpoint (remove the leading slash and any parameters)
+  // Extract entity name from all parts of the endpoint (remove the leading slash and any parameters)
   const parts = endpoint
     .split("/")
     .filter((part) => part && !part.startsWith("{"));
-  const entityName =
-    parts.length > 0 ? toPascalCase(parts[parts.length - 1]) : "Entity";
+  const entityName = parts.length > 0 ? parts.map(toPascalCase).join("") : "Entity";
 
   // Extract path parameters from the endpoint, matching `{param}`
   const pathParams = Array.from(endpoint.matchAll(/\{(\w+)\}/g)).map(
@@ -286,7 +295,7 @@ export function getResponseTypeName(
   method: string,
   entityName: string
 ): string {
-  return `${toPascalCase(method)}${entityName}Response`;
+  return `${toPascalCase(getSemanticMethodName(method))}${entityName}Response`;
 }
 
 export function ensureDirectoryExists(dir: string): void {

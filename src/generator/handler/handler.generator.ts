@@ -14,10 +14,11 @@ import {
   normalizeEndpoint,
   ensureOutputDirectory,
   extractRefName,
-  capitalizeFirstLetter,
   getMethodName,
   extractEntityName,
-  getTemplatePath
+  getTemplatePath,
+  extractClassNameFromEndpoint,
+  getSemanticMethodName
 } from "../util";
 
 // Replace the local `toPascalCase` and `extractRefName` with imports from `handlers-util.ts`
@@ -29,7 +30,7 @@ export class HandlerGenerator {
     methods: Record<string, OpenAPIV3.OperationObject>
   ): void {
     const normalizedEndpoint = normalizeEndpoint(endpoint);
-    const className = toPascalCase(normalizedEndpoint);
+    const className = toPascalCase(extractClassNameFromEndpoint(endpoint));
 
     // Create the new folder structure: <out>/<normalizedEndpoint>
     const targetDir = path.join(this.outputPath, normalizedEndpoint);
@@ -199,14 +200,6 @@ export class HandlerGenerator {
     return schemaImportLines.join("\n");
   }
 
-  // // Get the template path
-  // private getTemplatePath(templateFile: string): string {
-  //   const templateRoot =
-  //     process.env.SWAGGEN_TEMPLATE_ROOT ||
-  //     path.join(__dirname, "..", "templates");
-  //   return path.join(templateRoot, templateFile);
-  // }
-
   /**
    * Generates handler.base.ts with predefined content.
    *
@@ -234,80 +227,6 @@ export class HandlerGenerator {
       fs.mkdirSync(dirPath, { recursive: true });
     }
   }
-
-  /**
-   * Generate method implementation for a specific HTTP verb.
-   *
-   * @param method - The HTTP method in lowercase (e.g., "get", "post").
-   * @param methodSpec - The OpenAPI OperationObject for the method.
-   * @param className - Name of the handler class.
-   * @returns A string containing the method implementation.
-   */
-  // private generateMethodImplementation(
-  //   method: string,
-  //   methodSpec: OpenAPIV3.OperationObject,
-  //   className: string,
-  //   usedTypes: Set<string>,
-  //   schemaTypes: Set<string>
-  // ): string {
-  //   // Extract path parameter validation logic
-  //   const validationCode = this.generateValidationCode(methodSpec.parameters);
-
-  //   // Get the type for request body (if any)
-  //   let requestBodyType = "any";
-  //   if (methodSpec.requestBody) {
-  //     const requestBody = methodSpec.requestBody as OpenAPIV3.RequestBodyObject;
-  //     const content = requestBody.content["application/json"];
-  //     if (content && content.schema) {
-  //       if ("$ref" in content.schema) {
-  //         // Schema is a ReferenceObject, extract the reference name
-  //         requestBodyType = extractRefName(content.schema.$ref);
-  //         schemaTypes.add(requestBodyType); // Track as a schema type
-  //       } else if (
-  //         content.schema.type === "object" &&
-  //         content.schema.properties
-  //       ) {
-  //         // If the schema is an inline object without $ref, handle it differently
-  //         requestBodyType = "any";
-  //       }
-  //     }
-  //   }
-
-  //   // Generate proxy method signature for the comment
-  //   const proxyMethodSignature = this.generateProxyMethodSignature(
-  //     method,
-  //     className,
-  //     usedTypes // Pass usedTypes here as well
-  //   );
-
-  //   // Add request type if it is not "any" or a schema
-  //   if (requestBodyType !== "any" && !schemaTypes.has(requestBodyType)) {
-  //     usedTypes.add(requestBodyType);
-  //   }
-
-  //   // Construct the method implementation
-  //   let methodImpl = `  public async ${method}(req: Request): Promise<Response> {\n`;
-
-  //   // Add proxy method signature as a comment
-  //   methodImpl += `    // Proxy method signature: ${proxyMethodSignature}\n`;
-
-  //   if (validationCode.trim()) {
-  //     methodImpl += `${validationCode}`;
-  //   }
-
-  //   methodImpl += `    const result = await this.proxy.${getMethodName(method, className)}();\n`;
-
-  //   methodImpl += `    // TODO: Implement ${method.toUpperCase()} logic\n`;
-
-  //   if (methodSpec.requestBody && requestBodyType !== "any") {
-  //     methodImpl += `    // If request body type is needed: (req.body as ${requestBodyType})\n`;
-  //   }
-
-  //   methodImpl += `    return new Response(200, { "Content-Type": "application/json" }, { message: "${method.toUpperCase()} method called" });\n`;
-  //   methodImpl += `  }`;
-
-  //   return methodImpl;
-  // }
 
   private generateMethodImplementation(
     method: string,
@@ -363,7 +282,24 @@ export class HandlerGenerator {
       methodImpl += `${validationCode}`;
     }
   
-    methodImpl += `    const result = await this.proxy.${methodName}();\n`;
+    // Extract path parameters from the request
+    const pathParamAssignments = pathParams
+      .map((param) => `const ${param} = req.path.split("/").pop() || "";`)
+      .join("\n");
+  
+    if (pathParamAssignments) {
+      methodImpl += `    ${pathParamAssignments}\n`;
+    }
+  
+    // Construct the proxy method call with parameters
+    const proxyParams = [
+      ...pathParams,
+      requestBodyType !== "any" ? "req.body" : "",
+    ]
+      .filter((param) => param)
+      .join(", ");
+  
+    methodImpl += `    const result = await this.proxy.${methodName}(${proxyParams});\n`;
     methodImpl += `    // TODO: Implement ${method.toUpperCase()} logic\n`;
   
     if (methodSpec.requestBody && requestBodyType !== "any") {
@@ -384,8 +320,8 @@ export class HandlerGenerator {
   ): string {
     const entityName = extractEntityName(endpoint);
     const methodName = getMethodName(method, entityName);
-    const requestType = this.getRequestTypeName(method, endpoint);
-    const responseType = this.getResponseTypeName(method, endpoint);
+    const requestType = this.getRequestTypeName(getSemanticMethodName(method), endpoint);
+    const responseType = this.getResponseTypeName(getSemanticMethodName(method), endpoint);
   
     // Track request and response types
     if (requestType !== "void") {

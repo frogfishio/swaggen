@@ -10,6 +10,8 @@ import {
   resolveType,
   extractRefType,
   getResponseTypeName,
+  extractClassNameFromEndpoint,
+  getSemanticMethodName // Import the new helper function
 } from "../util";
 import { OpenAPIV3 } from "openapi-types";
 
@@ -18,7 +20,9 @@ export class HandlerProxyGenerator {
 
   public generateProxy(endpoint: string, methods: Record<string, any>): void {
     const normalizedEndpoint = normalizeEndpoint(endpoint);
-    const className = toPascalCase(normalizedEndpoint) + "Proxy";
+    const className = toPascalCase(extractClassNameFromEndpoint(endpoint)) + "Proxy";
+
+    console.log(`XXX Generating proxy for ${endpoint} -> ${className}...`);
 
     // Create directory for the proxy file: <out>/<normalizedEndpoint>
     const targetDir = path.join(this.outputPath, normalizedEndpoint);
@@ -130,7 +134,7 @@ export class HandlerProxyGenerator {
         // Generate a query params interface if we have query parameters
         let queryType = "void"; // Default to void if no query params
         if (queryParams.length > 0) {
-          const interfaceName = `${toPascalCase(method)}${pascalCaseEntityName}QueryParams`;
+          const interfaceName = `${toPascalCase(getSemanticMethodName(method))}${pascalCaseEntityName}QueryParams`;
           const queryParamsInterface = `interface ${interfaceName} { ${queryParams.join("; ")} }`;
           queryInterfaces.push(queryParamsInterface);
           queryType = interfaceName; // Use the interface as the query type
@@ -158,6 +162,8 @@ export class HandlerProxyGenerator {
         }
 
         const methodName = getMethodName(method, endpoint);
+
+        console.log(`XXX Generating method: ${methodName} [${method}] Endpoint: ${endpoint}`);
         const responseType = getResponseTypeName(method, pascalCaseEntityName);
 
         // Add response type to the usedTypes set
@@ -178,7 +184,7 @@ export class HandlerProxyGenerator {
           .filter((param) => param) // Exclude empty entries
           .join(", ");
 
-        return `${methodName}(${finalParams}): Promise<${responseType}>;`;
+        return `\t${methodName}(${finalParams}): Promise<${responseType}>;`;
       })
       .join("\n");
 
@@ -202,20 +208,20 @@ export class HandlerProxyGenerator {
     queryInterfaces: string[]
   ): string {
     return `
-  // Auto-generated proxy for ${className}
+// Auto-generated proxy for ${className}
   
-  ${handlerImports}
+${handlerImports}
   
-  // Auto-generated interfaces
-  ${interfaces}
+// Auto-generated interfaces
+${interfaces}
   
-  // Query parameter interfaces
-  ${queryInterfaces.join("\n")}
+// Query parameter interfaces
+${queryInterfaces.join("\n")}
   
-  export interface ${className} {
-    ${methods}
-  }
-    `;
+export interface ${className} {
+${methods}
+}
+`;
   }
 
   private ensureDirectoryExists(dir: string): void {

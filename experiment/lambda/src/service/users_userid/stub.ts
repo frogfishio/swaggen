@@ -1,17 +1,16 @@
 
-  // Auto-generated stub class for UsersUseridStub
-  import { GetUserResponse } from "./proxy";
+// Auto-generated stub class for UsersUserIdStub
+import { ReadUserResponse } from "./proxy";
 
-import { UsersUseridProxy } from "./proxy";
+import { UsersUserIdProxy } from "./proxy";
 import { User } from "../schema/user";
   
-  // Query parameter interfaces
-  interface GetUserQueryParams { include?: string[] }
+// Query parameter interfaces
+interface GetUserQueryParams { include?: string[] }
   
-  export class UsersUseridStub implements UsersUseridProxy {
-    
-    async readUsersByUserId(userId: string, query: GetUserQueryParams): Promise<GetUserResponse> {
+export class UsersUserIdStub implements UsersUserIdProxy {
+  
+    async readUsersByUserId(userId: string, query: GetUserQueryParams): Promise<ReadUserResponse> {
       return Promise.reject("Not implemented");
     }
-  }
-      
+}

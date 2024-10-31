@@ -1,15 +1,14 @@
 
-  // Auto-generated proxy for UsersUseridProxy
+// Auto-generated proxy for UsersUserIdProxy
   
-  import { User } from "../schema/user";
+import { User } from "../schema/user";
   
-  // Auto-generated interfaces
-  export type GetUserResponse = User;
+// Auto-generated interfaces
+export type ReadUserResponse = User;
   
-  // Query parameter interfaces
-  interface GetUserQueryParams { include?: string[] }
+// Query parameter interfaces
+interface ReadUserQueryParams { include?: string[] }
   
-  export interface UsersUseridProxy {
-    readUsersByUserId(userId: string, query: GetUserQueryParams): Promise<GetUserResponse>;
-  }
-    
+export interface UsersUserIdProxy {
+	readUsersByUserId(userId: string, query: ReadUserQueryParams): Promise<ReadUserResponse>;
+}

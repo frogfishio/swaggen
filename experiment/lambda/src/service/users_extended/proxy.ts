@@ -1,25 +1,24 @@
 
-  // Auto-generated proxy for UsersExtendedProxy
+// Auto-generated proxy for UsersExtendedProxy
   
-  import { User } from "../schema/user";
+import { User } from "../schema/user";
   
-  // Auto-generated interfaces
-  export interface PostExtendedRequest {
+// Auto-generated interfaces
+export interface CreateExtendedRequest {
   source?: string;
   isActive?: boolean;
   user?: User;
 }
 
-export interface PostExtendedResponse {
+export interface CreateExtendedResponse {
   user?: User;
   source?: string;
   isActive?: boolean;
 }
   
-  // Query parameter interfaces
-  interface PostExtendedRequestBody { source?: string; isActive?: boolean; user?: User; }
+// Query parameter interfaces
+interface PostExtendedRequestBody { source?: string; isActive?: boolean; user?: User; }
   
-  export interface UsersExtendedProxy {
-    createExtended(data: PostExtendedRequestBody): Promise<PostExtendedResponse>;
-  }
-    
+export interface UsersExtendedProxy {
+	createUsersExtended(data: PostExtendedRequestBody): Promise<CreateExtendedResponse>;
+}
